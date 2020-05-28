@@ -1,5 +1,5 @@
 name:                bankroll
-version:             0.1.0.0
+version:             0.2.0.0
 github:              "natebragg/bankroll"
 license:             BSD3
 author:              "Nate Bragg"
@@ -10,23 +10,46 @@ extra-source-files:
 - README.md
 
 # Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Numeric
+synopsis:            Wrapper for COIN-OR CLP
+category:            Numeric
 
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
 description:         Please see the README on GitHub at <https://github.com/natebragg/bankroll#readme>
 
+custom-setup:
+  dependencies:
+  - base >= 4.7 && < 5
+  - Cabal
+  - filepath
+
 dependencies:
 - base >= 4.7 && < 5
 
 library:
   source-dirs: src
+  exposed-modules:
+  - Data.Clp.Clp
+  - Data.Clp.LinearFunction
+  - Data.Clp.Program
+  - Data.Clp.Pretty
+  other-modules:
+  - Bindings.Clp.Clp
+  - Data.Clp.Managed
+  - Numeric.Algebra.Double
+  - Data.Mapping
+  dependencies:
+  - algebra
+  - pretty
+  extra-libraries:
+  - Clp
 
 executables:
-  bankroll-exe:
+  bankroll:
     main:                Main.hs
+    generated-other-modules:
+    - PackageInfo
     source-dirs:         app
     ghc-options:
     - -threaded

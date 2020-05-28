@@ -40,6 +40,10 @@ packages:
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
 # extra-deps: []
+extra-deps:
+#- algebra-4.3.1
+- git: https://github.com/ekmett/algebra.git
+  commit: 443e82dc3070ae67c01bfb506a04d9fa37e98ba0
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
