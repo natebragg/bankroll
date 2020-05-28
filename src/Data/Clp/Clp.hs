@@ -13,12 +13,12 @@ module Data.Clp.Clp (
     addColumns,
 
     OptimizationDirection(..),
-    optimizationDirection,
-    setOptimizationDirection,
+    getObjSense,
+    setObjSense,
     rowBounds,
     columnBounds,
     getElements,
-    objectiveValue,
+    getObjValue,
     LogLevel(..),
     setLogLevel,
 
@@ -115,25 +115,25 @@ addColumns model bounds elematrix =
 data OptimizationDirection = Maximize | Ignore | Minimize
     deriving (Eq, Ord, Enum, Show)
 
-optimizationDirection :: SimplexHandle -> IO OptimizationDirection
-optimizationDirection model = toEnum <$> truncate <$> (1.0 +) <$> Clp.optimizationDirection model
+getObjSense :: SimplexHandle -> IO OptimizationDirection
+getObjSense model = toEnum <$> truncate <$> (1.0 +) <$> Clp.getObjSense model
 
-setOptimizationDirection :: SimplexHandle -> OptimizationDirection -> IO ()
-setOptimizationDirection model dir = Clp.setOptimizationDirection model $ (fromIntegral $ fromEnum dir) - 1.0
+setObjSense :: SimplexHandle -> OptimizationDirection -> IO ()
+setObjSense model dir = Clp.setObjSense model $ (fromIntegral $ fromEnum dir) - 1.0
 
 rowBounds :: SimplexHandle -> IO [(Double, Double)]
 rowBounds model = do
     nr <- fromIntegral <$> Clp.getNumRows model
-    rl <- map realToFrac <$> (peekArray nr =<< Clp.rowLower model)
-    ru <- map realToFrac <$> (peekArray nr =<< Clp.rowUpper model)
+    rl <- map realToFrac <$> (peekArray nr =<< Clp.getRowLower model)
+    ru <- map realToFrac <$> (peekArray nr =<< Clp.getRowUpper model)
     return $ zip rl ru
 
 columnBounds :: SimplexHandle -> IO [(Double, Double, Double)]
 columnBounds model = do
     nc <- fromIntegral <$> Clp.getNumCols model
-    cl <- map realToFrac <$> (peekArray nc =<< Clp.columnLower model)
-    cu <- map realToFrac <$> (peekArray nc =<< Clp.columnUpper model)
-    ob <- map realToFrac <$> (peekArray nc =<< Clp.objective model)
+    cl <- map realToFrac <$> (peekArray nc =<< Clp.getColLower model)
+    cu <- map realToFrac <$> (peekArray nc =<< Clp.getColUpper model)
+    ob <- map realToFrac <$> (peekArray nc =<< Clp.getObjCoefficients model)
     return $ zip3 cl cu ob
 
 segment :: [Int] -> [a] -> [[a]]
@@ -151,8 +151,8 @@ getElements model = do
     vl <- map fromIntegral <$> (peekArray nc =<< Clp.getVectorLengths model)
     return $ map unpack $ segment vl (zip is es)
 
-objectiveValue :: SimplexHandle -> IO Double
-objectiveValue = (fmap realToFrac) . Clp.objectiveValue
+getObjValue :: SimplexHandle -> IO Double
+getObjValue = (fmap realToFrac) . Clp.getObjValue
 
 data LogLevel = None | Final | Factorizations | PlusABitMore | Verbose
     deriving (Eq, Ord, Enum, Show)

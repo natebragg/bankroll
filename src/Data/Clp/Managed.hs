@@ -12,18 +12,18 @@ module Data.Clp.Managed (
     addRows,
     addColumns,
 
-    optimizationDirection,
-    setOptimizationDirection,
-    rowLower,
-    rowUpper,
-    objective,
-    columnLower,
-    columnUpper,
+    getObjSense,
+    setObjSense,
+    getRowLower,
+    getRowUpper,
+    getObjCoefficients,
+    getColLower,
+    getColUpper,
     getNumElements,
     getIndices,
     getVectorLengths,
     getElements,
-    objectiveValue,
+    getObjValue,
     setLogLevel,
 
     initialSolve,
@@ -74,33 +74,33 @@ addColumns :: SimplexHandle -> CInt -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble
 addColumns model number columnLower columnUpper objective columnStarts rows elements = withForeignPtr model $ \model ->
     Unmanaged.addColumns model number columnLower columnUpper objective columnStarts rows elements
 
-optimizationDirection :: SimplexHandle -> IO CDouble
-optimizationDirection model = withForeignPtr model $ \model ->
-    Unmanaged.optimizationDirection model
+getObjSense :: SimplexHandle -> IO CDouble
+getObjSense model = withForeignPtr model $ \model ->
+    Unmanaged.getObjSense model
 
-setOptimizationDirection :: SimplexHandle -> CDouble -> IO ()
-setOptimizationDirection model value = withForeignPtr model $ \model ->
-    Unmanaged.setOptimizationDirection model value
+setObjSense :: SimplexHandle -> CDouble -> IO ()
+setObjSense model value = withForeignPtr model $ \model ->
+    Unmanaged.setObjSense model value
 
-rowLower :: SimplexHandle -> IO (Ptr CDouble)
-rowLower model = withForeignPtr model $ \model ->
-    Unmanaged.rowLower model
+getRowLower :: SimplexHandle -> IO (Ptr CDouble)
+getRowLower model = withForeignPtr model $ \model ->
+    Unmanaged.getRowLower model
 
-rowUpper :: SimplexHandle -> IO (Ptr CDouble)
-rowUpper model = withForeignPtr model $ \model ->
-    Unmanaged.rowUpper model
+getRowUpper :: SimplexHandle -> IO (Ptr CDouble)
+getRowUpper model = withForeignPtr model $ \model ->
+    Unmanaged.getRowUpper model
 
-objective :: SimplexHandle -> IO (Ptr CDouble)
-objective model = withForeignPtr model $ \model ->
-    Unmanaged.objective model
+getObjCoefficients :: SimplexHandle -> IO (Ptr CDouble)
+getObjCoefficients model = withForeignPtr model $ \model ->
+    Unmanaged.getObjCoefficients model
 
-columnLower :: SimplexHandle -> IO (Ptr CDouble)
-columnLower model = withForeignPtr model $ \model ->
-    Unmanaged.columnLower model
+getColLower :: SimplexHandle -> IO (Ptr CDouble)
+getColLower model = withForeignPtr model $ \model ->
+    Unmanaged.getColLower model
 
-columnUpper :: SimplexHandle -> IO (Ptr CDouble)
-columnUpper model = withForeignPtr model $ \model ->
-    Unmanaged.columnUpper model
+getColUpper :: SimplexHandle -> IO (Ptr CDouble)
+getColUpper model = withForeignPtr model $ \model ->
+    Unmanaged.getColUpper model
 
 getNumElements :: SimplexHandle -> IO CInt
 getNumElements model = withForeignPtr model $ \model ->
@@ -118,9 +118,9 @@ getElements :: SimplexHandle -> IO (Ptr CDouble)
 getElements model = withForeignPtr model $ \model ->
     Unmanaged.getElements model
 
-objectiveValue :: SimplexHandle -> IO CDouble
-objectiveValue model = withForeignPtr model $ \model ->
-    Unmanaged.objectiveValue model
+getObjValue :: SimplexHandle -> IO CDouble
+getObjValue model = withForeignPtr model $ \model ->
+    Unmanaged.getObjValue model
 
 setLogLevel :: SimplexHandle -> CInt -> IO ()
 setLogLevel model value = withForeignPtr model $ \model ->

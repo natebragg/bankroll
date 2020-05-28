@@ -16,18 +16,18 @@ module Bindings.Clp.Clp (
     addRows,
     addColumns,
 
-    optimizationDirection,
-    setOptimizationDirection,
-    rowLower,
-    rowUpper,
-    objective,
-    columnLower,
-    columnUpper,
+    getObjSense,
+    setObjSense,
+    getRowLower,
+    getRowUpper,
+    getObjCoefficients,
+    getColLower,
+    getColUpper,
     getNumElements,
     getIndices,
     getVectorLengths,
     getElements,
-    objectiveValue,
+    getObjValue,
     setLogLevel,
 
     initialSolve,
@@ -67,18 +67,18 @@ foreign import ccall unsafe "Clp_readMps"        readMps        :: SimplexHandle
 foreign import ccall unsafe "Clp_addRows"        addRows        :: SimplexHandle -> CInt -> Ptr CDouble -> Ptr CDouble -> Ptr CInt -> Ptr CInt -> Ptr CDouble -> IO ()
 foreign import ccall unsafe "Clp_addColumns"     addColumns     :: SimplexHandle -> CInt -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CInt -> Ptr CInt -> Ptr CDouble -> IO ()
 
-foreign import ccall unsafe "Clp_optimizationDirection"         optimizationDirection         :: SimplexHandle -> IO CDouble
-foreign import ccall unsafe "Clp_setOptimizationDirection"      setOptimizationDirection      :: SimplexHandle -> CDouble -> IO ()
-foreign import ccall unsafe "Clp_rowLower"                      rowLower                      :: SimplexHandle -> IO (Ptr CDouble)
-foreign import ccall unsafe "Clp_rowUpper"                      rowUpper                      :: SimplexHandle -> IO (Ptr CDouble)
-foreign import ccall unsafe "Clp_objective"                     objective                     :: SimplexHandle -> IO (Ptr CDouble)
-foreign import ccall unsafe "Clp_columnLower"                   columnLower                   :: SimplexHandle -> IO (Ptr CDouble)
-foreign import ccall unsafe "Clp_columnUpper"                   columnUpper                   :: SimplexHandle -> IO (Ptr CDouble)
+foreign import ccall unsafe "Clp_getObjSense"                   getObjSense                   :: SimplexHandle -> IO CDouble
+foreign import ccall unsafe "Clp_setObjSense"                   setObjSense                   :: SimplexHandle -> CDouble -> IO ()
+foreign import ccall unsafe "Clp_getRowLower"                   getRowLower                   :: SimplexHandle -> IO (Ptr CDouble)
+foreign import ccall unsafe "Clp_getRowUpper"                   getRowUpper                   :: SimplexHandle -> IO (Ptr CDouble)
+foreign import ccall unsafe "Clp_getObjCoefficients"            getObjCoefficients            :: SimplexHandle -> IO (Ptr CDouble)
+foreign import ccall unsafe "Clp_getColLower"                   getColLower                   :: SimplexHandle -> IO (Ptr CDouble)
+foreign import ccall unsafe "Clp_getColUpper"                   getColUpper                   :: SimplexHandle -> IO (Ptr CDouble)
 foreign import ccall unsafe "Clp_getNumElements"                getNumElements                :: SimplexHandle -> IO CInt
 foreign import ccall unsafe "Clp_getIndices"                    getIndices                    :: SimplexHandle -> IO (Ptr CInt)
 foreign import ccall unsafe "Clp_getVectorLengths"              getVectorLengths              :: SimplexHandle -> IO (Ptr CInt)
 foreign import ccall unsafe "Clp_getElements"                   getElements                   :: SimplexHandle -> IO (Ptr CDouble)
-foreign import ccall unsafe "Clp_objectiveValue"                objectiveValue                :: SimplexHandle -> IO CDouble
+foreign import ccall unsafe "Clp_getObjValue"                   getObjValue                   :: SimplexHandle -> IO CDouble
 foreign import ccall unsafe "Clp_setLogLevel"                   setLogLevel                   :: SimplexHandle -> CInt -> IO ()
 
 foreign import ccall unsafe "Clp_initialSolve"   initialSolve   :: SimplexHandle -> IO CInt

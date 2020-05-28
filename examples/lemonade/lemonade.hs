@@ -78,7 +78,7 @@ main = do
 
     input_by_rows model
 
-    Clp.setOptimizationDirection model Clp.Maximize
+    Clp.setObjSense model Clp.Maximize
 
     status <- Clp.initialSolve model
     when (status /= Clp.Optimal) $

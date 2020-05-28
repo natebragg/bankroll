@@ -62,12 +62,12 @@ instance LinearProgram GeneralForm where
         in  unsafePerformIO $ do
         model <- Clp.newModel
         Clp.setLogLevel model Clp.None
-        Clp.setOptimizationDirection model direction
+        Clp.setObjSense model direction
         Clp.addColumns model columnBounds []
         Clp.addRows model rowBounds elements
         status <- Clp.initialSolve model
         case status of
-            Clp.Optimal -> (,) <$> (dense <$> Clp.getColSolution model) <*> Clp.objectiveValue model
+            Clp.Optimal -> (,) <$> (dense <$> Clp.getColSolution model) <*> Clp.getObjValue model
             _ -> return (zero, 0.0)
 
 data StandardConstraint = Lteq LinearFunction Double
