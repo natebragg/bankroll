@@ -6,7 +6,7 @@ import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure, exitWith, ExitCode(ExitFailure))
 import Text.Printf (printf)
 
-import qualified Data.Clp.Clp as Clp
+import qualified Numeric.Optimization.Clp.Clp as Clp
 import PackageInfo (version, appName, synopsis)
 
 data Flag = Version

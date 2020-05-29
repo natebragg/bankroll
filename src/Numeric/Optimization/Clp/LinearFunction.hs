@@ -3,7 +3,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module Data.Clp.LinearFunction (
+module Numeric.Optimization.Clp.LinearFunction (
     LinearFunction,
     LinearFunFamily,
     dense,

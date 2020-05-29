@@ -1,4 +1,4 @@
-module Data.Clp.Managed (
+module Numeric.Optimization.Clp.Managed (
     version,
     versionMajor,
     versionMinor,

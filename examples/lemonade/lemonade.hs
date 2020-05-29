@@ -1,7 +1,7 @@
 module Lemonade where
 
-import qualified Data.Clp.Clp as Clp
-import Data.Clp.LinearFunction (dense)
+import qualified Numeric.Optimization.Clp.Clp as Clp
+import Numeric.Optimization.Clp.LinearFunction (dense)
 import Control.Monad (forM, when)
 import System.Exit (exitWith, ExitCode(ExitFailure))
 import Text.Printf (printf)

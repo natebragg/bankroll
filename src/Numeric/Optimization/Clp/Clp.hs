@@ -1,4 +1,4 @@
-module Data.Clp.Clp (
+module Numeric.Optimization.Clp.Clp (
     version,
     versionMajor,
     versionMinor,
@@ -39,7 +39,7 @@ module Data.Clp.Clp (
     getColSolution,
 ) where
 
-import Data.Clp.Managed (
+import Numeric.Optimization.Clp.Managed (
     SimplexHandle,
     newModel,
 
@@ -51,8 +51,8 @@ import Data.Clp.Managed (
     isDualObjectiveLimitReached,
     isIterationLimitReached,
     )
-import qualified Data.Clp.Managed as Clp
-import Data.Clp.LinearFunction (
+import qualified Numeric.Optimization.Clp.Managed as Clp
+import Numeric.Optimization.Clp.LinearFunction (
     LinearFunction,
     unpack,
     coefficients,

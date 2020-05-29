@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Data.Clp.Pretty (
+module Numeric.Optimization.Clp.Pretty (
     Grid(..),
     renderGrid,
     renderGridCompact,
@@ -12,16 +12,16 @@ module Data.Clp.Pretty (
     renderEqnDefault,
 ) where
 
-import Data.Clp.LinearFunction (
+import Numeric.Optimization.Clp.LinearFunction (
     LinearFunction,
     coefficients,
     sparse,
     )
-import Data.Clp.Program (
+import Numeric.Optimization.Clp.Program (
     GeneralConstraint(Leq, Eql, Geq),
     GeneralForm(GeneralForm),
     )
-import Data.Clp.Clp (
+import Numeric.Optimization.Clp.Clp (
     OptimizationDirection,
     )
 

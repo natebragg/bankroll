@@ -1,4 +1,4 @@
-module Data.Clp.Program (
+module Numeric.Optimization.Clp.Program (
     LinearProgram(..),
     Solution,
     Objective,
@@ -9,8 +9,8 @@ module Data.Clp.Program (
     StandardForm(..),
 ) where
 
-import qualified Data.Clp.Clp as Clp
-import Data.Clp.LinearFunction (LinearFunction, dense)
+import qualified Numeric.Optimization.Clp.Clp as Clp
+import Numeric.Optimization.Clp.LinearFunction (LinearFunction, dense)
 
 import Data.Foldable (toList)
 import Numeric.Algebra (zero)
