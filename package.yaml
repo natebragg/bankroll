@@ -11,7 +11,7 @@ extra-source-files:
 
 # Metadata used when publishing your package
 synopsis:            Wrapper for COIN-OR CLP
-category:            Numeric
+category:            Numeric, Optimisation, Optimization
 
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
@@ -30,13 +30,13 @@ dependencies:
 library:
   source-dirs: src
   exposed-modules:
-  - Data.Clp.Clp
-  - Data.Clp.LinearFunction
-  - Data.Clp.Program
-  - Data.Clp.Pretty
+  - Numeric.Optimization.Clp.Clp
+  - Numeric.Optimization.Clp.LinearFunction
+  - Numeric.Optimization.Clp.Program
+  - Numeric.Optimization.Clp.Pretty
   other-modules:
   - Bindings.Clp.Clp
-  - Data.Clp.Managed
+  - Numeric.Optimization.Clp.Managed
   - Numeric.Algebra.Double
   - Data.Mapping
   dependencies:
