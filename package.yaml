@@ -1,7 +1,10 @@
+verbatim:
+  cabal-version: 3.0
+
 name:                bankroll
 version:             0.2.0.0
 github:              "natebragg/bankroll"
-license:             BSD3
+license:             BSD-3-Clause
 author:              "Nate Bragg"
 maintainer:          "nate@cs.tufts.edu"
 copyright:           "(c) 2020 Nate Bragg"
@@ -21,7 +24,7 @@ description:         Please see the README on GitHub at <https://github.com/nate
 custom-setup:
   dependencies:
   - base >= 4.7 && < 5
-  - Cabal
+  - Cabal >= 3.0
   - filepath
 
 dependencies:
@@ -31,19 +34,31 @@ library:
   source-dirs: src
   exposed-modules:
   - Numeric.Optimization.Clp.Clp
-  - Numeric.Optimization.Clp.LinearFunction
-  - Numeric.Optimization.Clp.Program
-  - Numeric.Optimization.Clp.Pretty
-  other-modules:
-  - Bindings.Clp.Clp
-  - Numeric.Optimization.Clp.Managed
-  - Numeric.Algebra.Double
-  - Data.Mapping
   dependencies:
+  - bankroll-clp
   - algebra
   - pretty
-  extra-libraries:
-  - Clp
+
+internal-libraries:
+  bankroll-clp:
+    source-dirs: src
+    verbatim:
+      visibility: public
+    exposed-modules:
+    - Numeric.Optimization.Clp.Clp
+    - Numeric.Optimization.Clp.LinearFunction
+    - Numeric.Optimization.Clp.Program
+    - Numeric.Optimization.Clp.Pretty
+    other-modules:
+    - Bindings.Clp.Clp
+    - Numeric.Optimization.Clp.Managed
+    - Numeric.Algebra.Double
+    - Data.Mapping
+    dependencies:
+    - algebra
+    - pretty
+    extra-libraries:
+    - Clp
 
 executables:
   bankroll:
@@ -57,6 +72,11 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - bankroll
+  lemonade:
+    main: lemonade.hs
+    source-dirs: examples/lemonade
+    dependencies:
+    - bankroll-clp
 
 tests:
   bankroll-test:

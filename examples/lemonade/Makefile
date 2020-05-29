@@ -4,7 +4,7 @@ lemonade-c: lemonade.c
 	gcc -o $@ $^ -lClp
 
 lemonade-hs: lemonade.hs
-	stack ghc -- -o $@ -main-is Lemonade $^
+	stack build :lemonade
 
 clean:
-	rm -f lemonade-c lemonade-hs lemonade.o lemonade.hi
+	rm -f lemonade-c lemonade.o

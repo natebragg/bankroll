@@ -1,4 +1,4 @@
-module Lemonade where
+module Main where
 
 import qualified Numeric.Optimization.Clp.Clp as Clp
 import Numeric.Optimization.Clp.LinearFunction (dense)
