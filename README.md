@@ -1,12 +1,12 @@
 # Bankroll: A COIN wrapper
 
-Bankroll is a wrapper for COIN-OR CLP.
+Bankroll is a wrapper for COIN-OR CLP and CBC.
 
 It also comes with a simple executable frontend.
 
 ## Building
 
-Bankroll depends on Stack and the Haskell platform, and CLP.
+Bankroll depends on Stack and the Haskell platform, CLP, and CBC.
 
 On Ubuntu, these can be installed with:
 

@@ -13,7 +13,7 @@ extra-source-files:
 - README.md
 
 # Metadata used when publishing your package
-synopsis:            Wrapper for COIN-OR CLP
+synopsis:            Wrapper for COIN-OR CLP and CBC
 category:            Numeric, Optimisation, Optimization
 
 # To avoid duplicated efforts in documentation and dealing with the
@@ -33,10 +33,12 @@ dependencies:
 library:
   source-dirs:
   - src/clp
+  - src/cbc
   exposed-modules:
   - Numeric.Optimization.Clp.Clp
   dependencies:
   - bankroll-clp
+  - bankroll-cbc
   - algebra
   - pretty
 
@@ -60,6 +62,15 @@ internal-libraries:
     - pretty
     extra-libraries:
     - Clp
+  bankroll-cbc:
+    source-dirs: src/cbc
+    verbatim:
+      visibility: public
+    other-modules:
+    - Bindings.Cbc.Cbc
+    - Bindings.Cbc.Managed
+    extra-libraries:
+    - Cbc
 
 executables:
   bankroll:
