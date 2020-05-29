@@ -39,7 +39,7 @@ module Numeric.Optimization.Clp.Clp (
     getColSolution,
 ) where
 
-import Numeric.Optimization.Clp.Managed (
+import Bindings.Clp.Managed (
     SimplexHandle,
     newModel,
 
@@ -51,7 +51,7 @@ import Numeric.Optimization.Clp.Managed (
     isDualObjectiveLimitReached,
     isIterationLimitReached,
     )
-import qualified Numeric.Optimization.Clp.Managed as Clp
+import qualified Bindings.Clp.Managed as Clp
 import Numeric.Optimization.Clp.LinearFunction (
     LinearFunction,
     unpack,

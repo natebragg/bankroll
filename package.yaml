@@ -31,7 +31,8 @@ dependencies:
 - base >= 4.7 && < 5
 
 library:
-  source-dirs: src
+  source-dirs:
+  - src/clp
   exposed-modules:
   - Numeric.Optimization.Clp.Clp
   dependencies:
@@ -41,7 +42,7 @@ library:
 
 internal-libraries:
   bankroll-clp:
-    source-dirs: src
+    source-dirs: src/clp
     verbatim:
       visibility: public
     exposed-modules:
@@ -51,7 +52,7 @@ internal-libraries:
     - Numeric.Optimization.Clp.Pretty
     other-modules:
     - Bindings.Clp.Clp
-    - Numeric.Optimization.Clp.Managed
+    - Bindings.Clp.Managed
     - Numeric.Algebra.Double
     - Data.Mapping
     dependencies:

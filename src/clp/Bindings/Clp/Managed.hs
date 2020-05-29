@@ -1,4 +1,4 @@
-module Numeric.Optimization.Clp.Managed (
+module Bindings.Clp.Managed (
     version,
     versionMajor,
     versionMinor,
