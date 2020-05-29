@@ -31,16 +31,12 @@ dependencies:
 - base >= 4.7 && < 5
 
 library:
-  source-dirs:
-  - src/clp
-  - src/cbc
-  exposed-modules:
+  reexported-modules:
   - Numeric.Optimization.Clp.Clp
   dependencies:
   - bankroll-clp
   - bankroll-cbc
-  - algebra
-  - pretty
+  - bankroll-common
 
 internal-libraries:
   bankroll-clp:
@@ -49,17 +45,11 @@ internal-libraries:
       visibility: public
     exposed-modules:
     - Numeric.Optimization.Clp.Clp
-    - Numeric.Optimization.Clp.LinearFunction
-    - Numeric.Optimization.Clp.Program
-    - Numeric.Optimization.Clp.Pretty
     other-modules:
     - Bindings.Clp.Clp
     - Bindings.Clp.Managed
-    - Numeric.Algebra.Double
-    - Data.Mapping
     dependencies:
-    - algebra
-    - pretty
+    - bankroll-common
     extra-libraries:
     - Clp
   bankroll-cbc:
@@ -69,8 +59,22 @@ internal-libraries:
     other-modules:
     - Bindings.Cbc.Cbc
     - Bindings.Cbc.Managed
+    dependencies:
+    - bankroll-common
     extra-libraries:
     - Cbc
+  bankroll-common:
+    source-dirs: src/common
+    exposed-modules:
+    - Numeric.Optimization.Bankroll.LinearFunction
+    - Numeric.Optimization.Bankroll.Program
+    - Numeric.Optimization.Bankroll.Pretty
+    other-modules:
+    - Numeric.Algebra.Double
+    - Data.Mapping
+    dependencies:
+    - algebra
+    - pretty
 
 executables:
   bankroll:
@@ -89,6 +93,7 @@ executables:
     source-dirs: examples/lemonade
     dependencies:
     - bankroll-clp
+    - bankroll-common
 
 tests:
   bankroll-test:

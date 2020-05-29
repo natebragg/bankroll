@@ -1,7 +1,7 @@
 module Main where
 
 import qualified Numeric.Optimization.Clp.Clp as Clp
-import Numeric.Optimization.Clp.LinearFunction (dense)
+import Numeric.Optimization.Bankroll.LinearFunction (dense)
 import Control.Monad (forM, when)
 import System.Exit (exitWith, ExitCode(ExitFailure))
 import Text.Printf (printf)

@@ -52,7 +52,7 @@ import Bindings.Clp.Managed (
     isIterationLimitReached,
     )
 import qualified Bindings.Clp.Managed as Clp
-import Numeric.Optimization.Clp.LinearFunction (
+import Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunction,
     unpack,
     coefficients,
