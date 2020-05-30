@@ -1,4 +1,4 @@
-module Numeric.Optimization.Clp.Program (
+module Numeric.Optimization.Bankroll.Program (
     LinearProgram(..),
     Solution,
     Objective,
@@ -9,8 +9,8 @@ module Numeric.Optimization.Clp.Program (
     StandardForm(..),
 ) where
 
-import qualified Numeric.Optimization.Clp.Clp as Clp
-import Numeric.Optimization.Clp.LinearFunction (LinearFunction, dense)
+import qualified Numeric.Optimization.Bankroll.Solver as Solver
+import Numeric.Optimization.Bankroll.LinearFunction (LinearFunction, dense)
 
 import Data.Foldable (toList)
 import Numeric.Algebra (zero)
@@ -48,7 +48,7 @@ bound (Leq _ n) = (-inf, n)
 bound (Eql _ n) = (n, n)
 bound (Geq _ n) = (n, inf)
 
-data GeneralForm = GeneralForm Clp.OptimizationDirection Objective [GeneralConstraint]
+data GeneralForm = GeneralForm Solver.OptimizationDirection Objective [GeneralConstraint]
     deriving Show
 
 instance LinearProgram GeneralForm where
@@ -60,14 +60,13 @@ instance LinearProgram GeneralForm where
                            replicate (row_length - length obj_dec) (0.0, inf, 0.0)
             rowBounds = map bound constraints
         in  unsafePerformIO $ do
-        model <- Clp.newModel
-        Clp.setLogLevel model Clp.None
-        Clp.setObjSense model direction
-        Clp.addColumns model columnBounds []
-        Clp.addRows model rowBounds elements
-        status <- Clp.initialSolve model
+        model <- Solver.newModel
+        Solver.setObjSense model direction
+        Solver.addColumns model columnBounds []
+        Solver.addRows model rowBounds elements
+        status <- Solver.solve model
         case status of
-            Clp.Optimal -> (,) <$> (dense <$> Clp.getColSolution model) <*> Clp.getObjValue model
+            Solver.Optimal -> (,) <$> (dense <$> Solver.getColSolution model) <*> Solver.getObjValue model
             _ -> return (zero, 0.0)
 
 data StandardConstraint = Lteq LinearFunction Double
@@ -81,4 +80,4 @@ data StandardForm = StandardForm Objective [StandardConstraint]
 
 instance LinearProgram StandardForm where
     solve (StandardForm objective constraints) =
-        solve $ GeneralForm Clp.Maximize objective $ map generalize constraints
+        solve $ GeneralForm Solver.Maximize objective $ map generalize constraints

@@ -4,47 +4,23 @@ module Numeric.Optimization.Clp.Clp (
     versionMinor,
     versionRelease,
 
-    SimplexHandle,
-
-    newModel,
-
-    readMps,
     addRows,
     addColumns,
 
-    OptimizationDirection(..),
-    getObjSense,
-    setObjSense,
-    rowBounds,
-    columnBounds,
-    getElements,
-    getObjValue,
     LogLevel(..),
     setLogLevel,
 
-    Status(..),
-    initialSolve,
     Pass(..),
     dual,
 
-    isAbandoned,
-    isProvenOptimal,
-    isProvenPrimalInfeasible,
-    isProvenDualInfeasible,
-    isPrimalObjectiveLimitReached,
-    isDualObjectiveLimitReached,
-    isIterationLimitReached,
-
-    getRowActivity,
-    getColSolution,
+    module Bindings.Clp.Managed,
+    module Solver,
+    Solver.Solver(..)
 ) where
 
 import Bindings.Clp.Managed (
     SimplexHandle,
-    newModel,
 
-    isAbandoned,
-    isProvenOptimal,
     isProvenPrimalInfeasible,
     isProvenDualInfeasible,
     isPrimalObjectiveLimitReached,
@@ -54,15 +30,15 @@ import Bindings.Clp.Managed (
 import qualified Bindings.Clp.Managed as Clp
 import Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunction,
-    unpack,
     coefficients,
     )
 
 import Foreign.Ptr (nullPtr)
-import Foreign.ForeignPtr (ForeignPtr)
-import Foreign.C.String (peekCString, withCString)
-import Foreign.Marshal.Array (peekArray, withArray, withArrayLen)
+import Foreign.C.String (peekCString)
+import Foreign.Marshal.Array (withArray, withArrayLen)
 import System.IO.Unsafe (unsafePerformIO)
+import Numeric.Optimization.Bankroll.Solver as Solver
+import qualified Numeric.Optimization.Bankroll.Solver.Foreign as Foreign
 
 version :: String
 version = unsafePerformIO $ peekCString Clp.version
@@ -75,10 +51,6 @@ versionMinor = fromIntegral Clp.versionMinor
 
 versionRelease :: Int
 versionRelease = fromIntegral Clp.versionRelease
-
-readMps :: SimplexHandle -> String -> Bool -> Bool -> IO Int
-readMps model fn keepNames ignoreErrors =
-    withCString fn $ \fn -> fromIntegral <$> Clp.readMps model fn keepNames ignoreErrors
 
 startsIndicesElements :: [LinearFunction] -> ([Int], [Int], [Double])
 startsIndicesElements elematrix = (starts, concat indices, concat elements)
@@ -112,67 +84,11 @@ addColumns model bounds elematrix =
                             withArray (map fromIntegral rows) .
                                 (withArray (map realToFrac elements) .) . addElements
 
-data OptimizationDirection = Maximize | Ignore | Minimize
-    deriving (Eq, Ord, Enum, Show)
-
-getObjSense :: SimplexHandle -> IO OptimizationDirection
-getObjSense model = toEnum <$> truncate <$> (1.0 +) <$> Clp.getObjSense model
-
-setObjSense :: SimplexHandle -> OptimizationDirection -> IO ()
-setObjSense model dir = Clp.setObjSense model $ (fromIntegral $ fromEnum dir) - 1.0
-
-rowBounds :: SimplexHandle -> IO [(Double, Double)]
-rowBounds model = do
-    nr <- fromIntegral <$> Clp.getNumRows model
-    rl <- map realToFrac <$> (peekArray nr =<< Clp.getRowLower model)
-    ru <- map realToFrac <$> (peekArray nr =<< Clp.getRowUpper model)
-    return $ zip rl ru
-
-columnBounds :: SimplexHandle -> IO [(Double, Double, Double)]
-columnBounds model = do
-    nc <- fromIntegral <$> Clp.getNumCols model
-    cl <- map realToFrac <$> (peekArray nc =<< Clp.getColLower model)
-    cu <- map realToFrac <$> (peekArray nc =<< Clp.getColUpper model)
-    ob <- map realToFrac <$> (peekArray nc =<< Clp.getObjCoefficients model)
-    return $ zip3 cl cu ob
-
-segment :: [Int] -> [a] -> [[a]]
-segment [] [] = []
-segment [] as = [as]
-segment (n:ls) as = a:segment ls as'
-    where (a, as') = splitAt n as
-
-getElements :: SimplexHandle -> IO [[Double]]
-getElements model = do
-    ne <- fromIntegral <$> Clp.getNumElements model
-    is <- map fromIntegral <$> (peekArray ne =<< Clp.getIndices model)
-    es <- map realToFrac <$> (peekArray ne =<< Clp.getElements model)
-    nc <- fromIntegral <$> Clp.getNumCols model
-    vl <- map fromIntegral <$> (peekArray nc =<< Clp.getVectorLengths model)
-    return $ map unpack $ segment vl (zip is es)
-
-getObjValue :: SimplexHandle -> IO Double
-getObjValue = (fmap realToFrac) . Clp.getObjValue
-
 data LogLevel = None | Final | Factorizations | PlusABitMore | Verbose
     deriving (Eq, Ord, Enum, Show)
 
 setLogLevel :: SimplexHandle -> LogLevel -> IO ()
 setLogLevel model level = Clp.setLogLevel model $ fromIntegral $ fromEnum level
-
-data Status = Event3
-            | Event2
-            | Unknown
-            | Optimal
-            | PrimalInfeasible
-            | DualInfeasible
-            | Stopped
-            | Errors
-            | UserStopped
-    deriving (Eq, Ord, Enum, Show)
-
-initialSolve :: SimplexHandle -> IO Status
-initialSolve model = fmap (toEnum . (3 +) . fromIntegral) $ Clp.initialSolve model
 
 data Pass = Initial
           | ValuesPass
@@ -182,18 +98,26 @@ data Pass = Initial
 dual :: SimplexHandle -> Pass -> IO Status
 dual model pass = fmap (toEnum . (3 +) . fromIntegral) $ Clp.dual model $ fromIntegral $ fromEnum pass
 
-getNumRows :: SimplexHandle -> IO Int
-getNumRows = (fmap fromIntegral) . Clp.getNumRows
+instance Foreign.Solver SimplexHandle where
+    newModel = Clp.newModel >>= \m -> setLogLevel m None >> return m
+    readMps = Clp.readMps
+    getObjSense = Clp.getObjSense
+    setObjSense = Clp.setObjSense
+    getRowLower = Clp.getRowLower
+    getRowUpper = Clp.getRowUpper
+    getObjCoefficients = Clp.getObjCoefficients
+    getColLower = Clp.getColLower
+    getColUpper = Clp.getColUpper
+    getNumElements = Clp.getNumElements
+    getIndices = Clp.getIndices
+    getElements = Clp.getElements
+    getObjValue = Clp.getObjValue
+    initialSolve = Clp.initialSolve
+    getNumRows = Clp.getNumRows
+    getNumCols = Clp.getNumCols
+    isAbandoned = Clp.isAbandoned
+    isProvenOptimal = Clp.isProvenOptimal
+    getRowActivity = Clp.getRowActivity
+    getColSolution = Clp.getColSolution
 
-getNumCols :: SimplexHandle -> IO Int
-getNumCols = (fmap fromIntegral) . Clp.getNumCols
-
-getRowActivity :: SimplexHandle -> IO [Double]
-getRowActivity model = do
-    nr <- fromIntegral <$> Clp.getNumRows model
-    map realToFrac <$> (peekArray nr =<< Clp.getRowActivity model)
-
-getColSolution :: SimplexHandle -> IO [Double]
-getColSolution model = do
-    nc <- fromIntegral <$> Clp.getNumCols model
-    map realToFrac <$> (peekArray nc =<< Clp.getColSolution model)
+instance Solver SimplexHandle

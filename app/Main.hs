@@ -62,7 +62,7 @@ main = do
 
     Clp.setObjSense model Clp.Maximize
 
-    status <- Clp.initialSolve model
+    status <- Clp.solve model
     when (status /= Clp.Optimal) $
         exitWith $ ExitFailure $ fromEnum status
 

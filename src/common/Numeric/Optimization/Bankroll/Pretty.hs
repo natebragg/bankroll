@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Numeric.Optimization.Clp.Pretty (
+module Numeric.Optimization.Bankroll.Pretty (
     Grid(..),
     renderGrid,
     renderGridCompact,
@@ -12,17 +12,14 @@ module Numeric.Optimization.Clp.Pretty (
     renderEqnDefault,
 ) where
 
-import Numeric.Optimization.Clp.LinearFunction (
+import Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunction,
     coefficients,
     sparse,
     )
-import Numeric.Optimization.Clp.Program (
+import Numeric.Optimization.Bankroll.Program (
     GeneralConstraint(Leq, Eql, Geq),
     GeneralForm(GeneralForm),
-    )
-import Numeric.Optimization.Clp.Clp (
-    OptimizationDirection,
     )
 
 import Control.Arrow (first, (&&&))

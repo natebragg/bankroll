@@ -69,6 +69,8 @@ internal-libraries:
     - Numeric.Optimization.Bankroll.LinearFunction
     - Numeric.Optimization.Bankroll.Program
     - Numeric.Optimization.Bankroll.Pretty
+    - Numeric.Optimization.Bankroll.Solver
+    - Numeric.Optimization.Bankroll.Solver.Foreign
     other-modules:
     - Numeric.Algebra.Double
     - Data.Mapping
