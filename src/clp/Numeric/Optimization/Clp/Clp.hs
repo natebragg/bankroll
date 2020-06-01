@@ -109,7 +109,9 @@ instance Foreign.Solver SimplexHandle where
     getColLower = Clp.getColLower
     getColUpper = Clp.getColUpper
     getNumElements = Clp.getNumElements
+    getVectorStarts = Clp.getVectorStarts
     getIndices = Clp.getIndices
+    getVectorLengths = Clp.getVectorLengths
     getElements = Clp.getElements
     getObjValue = Clp.getObjValue
     initialSolve = Clp.initialSolve

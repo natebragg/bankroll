@@ -24,6 +24,7 @@ module Bindings.Clp.Clp (
     getColLower,
     getColUpper,
     getNumElements,
+    getVectorStarts,
     getIndices,
     getVectorLengths,
     getElements,
@@ -75,6 +76,7 @@ foreign import ccall unsafe "Clp_getObjCoefficients"            getObjCoefficien
 foreign import ccall unsafe "Clp_getColLower"                   getColLower                   :: SimplexHandle -> IO (Ptr CDouble)
 foreign import ccall unsafe "Clp_getColUpper"                   getColUpper                   :: SimplexHandle -> IO (Ptr CDouble)
 foreign import ccall unsafe "Clp_getNumElements"                getNumElements                :: SimplexHandle -> IO CInt
+foreign import ccall unsafe "Clp_getVectorStarts"               getVectorStarts               :: SimplexHandle -> IO (Ptr CInt)
 foreign import ccall unsafe "Clp_getIndices"                    getIndices                    :: SimplexHandle -> IO (Ptr CInt)
 foreign import ccall unsafe "Clp_getVectorLengths"              getVectorLengths              :: SimplexHandle -> IO (Ptr CInt)
 foreign import ccall unsafe "Clp_getElements"                   getElements                   :: SimplexHandle -> IO (Ptr CDouble)

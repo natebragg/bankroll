@@ -20,6 +20,7 @@ module Bindings.Clp.Managed (
     getColLower,
     getColUpper,
     getNumElements,
+    getVectorStarts,
     getIndices,
     getVectorLengths,
     getElements,
@@ -105,6 +106,10 @@ getColUpper model = withForeignPtr (runModel model) $ \model ->
 getNumElements :: SimplexHandle -> IO CInt
 getNumElements model = withForeignPtr (runModel model) $ \model ->
     Unmanaged.getNumElements model
+
+getVectorStarts :: SimplexHandle -> IO (Ptr CInt)
+getVectorStarts model = withForeignPtr (runModel model) $ \model ->
+    Unmanaged.getVectorStarts model
 
 getIndices :: SimplexHandle -> IO (Ptr CInt)
 getIndices model = withForeignPtr (runModel model) $ \model ->

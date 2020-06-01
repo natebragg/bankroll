@@ -17,7 +17,9 @@ class Solver s where
     getColLower :: s -> IO (Ptr CDouble)
     getColUpper :: s -> IO (Ptr CDouble)
     getNumElements :: s -> IO CInt
+    getVectorStarts :: s -> IO (Ptr CInt)
     getIndices :: s -> IO (Ptr CInt)
+    getVectorLengths :: s -> IO (Ptr CInt)
     getElements :: s -> IO (Ptr CDouble)
     getObjValue :: s -> IO CDouble
     initialSolve :: s -> IO CInt

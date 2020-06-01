@@ -59,13 +59,14 @@ class Foreign.Solver s => Solver s where
         is <- map fromIntegral <$> (peekArray ne =<< Foreign.getIndices model)
         es <- map realToFrac <$> (peekArray ne =<< Foreign.getElements model)
         nc <- fromIntegral <$> Foreign.getNumCols model
+        vs <- map fromIntegral <$> (peekArray nc =<< Foreign.getVectorStarts model)
         vl <- map fromIntegral <$> (peekArray nc =<< Foreign.getVectorLengths model)
-        return $ map unpack $ segment vl (zip is es)
-        where segment :: [Int] -> [a] -> [[a]]
-              segment [] [] = []
-              segment [] as = [as]
-              segment (n:ls) as = a:segment ls as'
-                  where (a, as') = splitAt n as
+        return $ map unpack $ segment 0 (zip vs vl) (zip is es)
+        where segment :: Int -> [(Int, Int)] -> [a] -> [[a]]
+              segment _ [] _ = [] -- There may be extraneous trailing elements.
+              segment i ((j, _):_) _ | j < i = error "column start overshot"
+              segment i ((j, n):sls) as = a:segment (j + n) sls as'
+                  where (a, as') = splitAt n $ drop (j - i) as
 
     getObjValue :: s -> IO Double
     getObjValue = (fmap realToFrac) . Foreign.getObjValue
