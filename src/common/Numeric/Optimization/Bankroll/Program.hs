@@ -66,7 +66,7 @@ instance LinearProgram GeneralForm where
         Solver.addRows model rowBounds elements
         status <- Solver.solve model
         case status of
-            Solver.Optimal -> (,) <$> (dense <$> Solver.getColSolution model) <*> Solver.getObjValue model
+            Solver.Optimal -> (,) <$> Solver.getColSolution model <*> Solver.getObjValue model
             _ -> return (zero, 0.0)
 
 data StandardConstraint = Lteq LinearFunction Double

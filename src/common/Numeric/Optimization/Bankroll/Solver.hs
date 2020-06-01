@@ -10,7 +10,7 @@ module Numeric.Optimization.Bankroll.Solver (
 
 import Foreign.C.String (withCString)
 import Foreign.Marshal.Array (peekArray)
-import Numeric.Optimization.Bankroll.LinearFunction (unpack)
+import Numeric.Optimization.Bankroll.LinearFunction (LinearFunction, dense, sparse)
 import qualified Numeric.Optimization.Bankroll.Solver.Foreign as Foreign
 
 data OptimizationDirection = Maximize | Ignore | Minimize
@@ -53,7 +53,7 @@ class Foreign.Solver s => Solver s where
         ob <- map realToFrac <$> (peekArray nc =<< Foreign.getObjCoefficients model)
         return $ zip3 cl cu ob
 
-    getElements :: s -> IO [[Double]]
+    getElements :: s -> IO [LinearFunction]
     getElements model = do
         ne <- fromIntegral <$> Foreign.getNumElements model
         is <- map fromIntegral <$> (peekArray ne =<< Foreign.getIndices model)
@@ -61,7 +61,7 @@ class Foreign.Solver s => Solver s where
         nc <- fromIntegral <$> Foreign.getNumCols model
         vs <- map fromIntegral <$> (peekArray nc =<< Foreign.getVectorStarts model)
         vl <- map fromIntegral <$> (peekArray nc =<< Foreign.getVectorLengths model)
-        return $ map unpack $ segment 0 (zip vs vl) (zip is es)
+        return $ map sparse $ segment 0 (zip vs vl) (zip is es)
         where segment :: Int -> [(Int, Int)] -> [a] -> [[a]]
               segment _ [] _ = [] -- There may be extraneous trailing elements.
               segment i ((j, _):_) _ | j < i = error "column start overshot"
@@ -80,12 +80,12 @@ class Foreign.Solver s => Solver s where
     getNumCols :: s -> IO Int
     getNumCols = (fmap fromIntegral) . Foreign.getNumCols
 
-    getRowActivity :: s -> IO [Double]
+    getRowActivity :: s -> IO LinearFunction
     getRowActivity model = do
         nr <- fromIntegral <$> Foreign.getNumRows model
-        map realToFrac <$> (peekArray nr =<< Foreign.getRowActivity model)
+        dense <$> map realToFrac <$> (peekArray nr =<< Foreign.getRowActivity model)
 
-    getColSolution :: s -> IO [Double]
+    getColSolution :: s -> IO LinearFunction
     getColSolution model = do
         nc <- fromIntegral <$> Foreign.getNumCols model
-        map realToFrac <$> (peekArray nc =<< Foreign.getColSolution model)
+        dense <$> map realToFrac <$> (peekArray nc =<< Foreign.getColSolution model)

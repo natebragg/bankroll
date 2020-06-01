@@ -8,12 +8,10 @@ module Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunFamily,
     dense,
     sparse,
-    unpack,
     coefficients,
 ) where
 
 import Control.Arrow (second)
-import Data.Foldable (toList)
 import Data.List (sortOn, partition)
 import Data.Mapping (Mapping(..))
 import Numeric.Algebra (
@@ -93,9 +91,6 @@ dense = sparse . zip (enumFrom $ toEnum 0)
 
 sparse :: (Ord i, Enum i, Eq a, Monoidal a) => [(i, a)] -> LinFunc i a
 sparse = LinFunc . filter ((/= zero) . snd)
-
-unpack :: (Ord i, Enum i, Eq a, Monoidal a) => [(i, a)] -> [a]
-unpack = toList . sparse
 
 coefficients :: LinFunc i a -> ([i], [a])
 coefficients (LinFunc cs) = unzip cs

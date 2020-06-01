@@ -32,6 +32,7 @@ dependencies:
 
 library:
   reexported-modules:
+  - Numeric.Optimization.Bankroll.LinearFunction
   - Numeric.Optimization.Clp.Clp
   dependencies:
   - bankroll-clp

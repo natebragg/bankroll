@@ -7,6 +7,7 @@ import System.Exit (exitSuccess, exitFailure, exitWith, ExitCode(ExitFailure))
 import Text.Printf (printf)
 
 import qualified Numeric.Optimization.Clp.Clp as Clp
+import Numeric.Optimization.Bankroll.LinearFunction (coefficients)
 import PackageInfo (version, appName, synopsis)
 
 data Flag = Version
@@ -49,8 +50,7 @@ input_by_file model fn = do
     when (status /= 0) $
         exitWith $ ExitFailure status
 
-enumerate :: [a] -> [(Int, a)]
-enumerate = zip [0..]
+enumerate = uncurry zip . coefficients
 
 main :: IO ()
 main = do
