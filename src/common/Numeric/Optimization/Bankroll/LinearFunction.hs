@@ -9,6 +9,7 @@ module Numeric.Optimization.Bankroll.LinearFunction (
     dense,
     sparse,
     coefficients,
+    coefficientOffsets,
 ) where
 
 import Control.Arrow (second)
@@ -94,6 +95,11 @@ sparse = LinFunc . filter ((/= zero) . snd)
 
 coefficients :: LinFunc i a -> ([i], [a])
 coefficients (LinFunc cs) = unzip cs
+
+coefficientOffsets :: [LinFunc i a] -> ([Int], [i], [a])
+coefficientOffsets fs = (offs, concat is, concat as)
+    where offs = scanl (+) 0 $ map length is
+          (is, as) = unzip $ map coefficients fs
 
 type LinearFunFamily b = FunFamily b Int Double
 

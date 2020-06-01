@@ -30,7 +30,7 @@ import Bindings.Clp.Managed (
 import qualified Bindings.Clp.Managed as Clp
 import Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunction,
-    coefficients,
+    coefficientOffsets,
     )
 
 import Foreign.Ptr (nullPtr)
@@ -52,11 +52,6 @@ versionMinor = fromIntegral Clp.versionMinor
 versionRelease :: Int
 versionRelease = fromIntegral Clp.versionRelease
 
-startsIndicesElements :: [LinearFunction] -> ([Int], [Int], [Double])
-startsIndicesElements elematrix = (starts, concat indices, concat elements)
-    where starts = scanl (+) 0 $ map length indices
-          (indices, elements) = unzip $ map coefficients elematrix
-
 addRows :: SimplexHandle -> [(Double, Double)] -> [LinearFunction] -> IO ()
 addRows model bounds elematrix =
     let (rowLower, rowUpper) = unzip bounds
@@ -65,7 +60,7 @@ addRows model bounds elematrix =
             let addElements = Clp.addRows model (fromIntegral num_rows) rowLower rowUpper
             in  case elematrix of
                 [] -> addElements nullPtr nullPtr nullPtr
-                _ -> let (rowStarts, columns, elements) = startsIndicesElements elematrix
+                _ -> let (rowStarts, columns, elements) = coefficientOffsets elematrix
                      in  withArray (map fromIntegral rowStarts) $
                             withArray (map fromIntegral columns) .
                                 (withArray (map realToFrac elements) .) . addElements
@@ -79,7 +74,7 @@ addColumns model bounds elematrix =
             let addElements = Clp.addColumns model (fromIntegral num_cols) columnLower columnUpper objective
             in case elematrix of
                 [] -> addElements nullPtr nullPtr nullPtr
-                _ -> let (columnStarts, rows, elements) = startsIndicesElements elematrix
+                _ -> let (columnStarts, rows, elements) = coefficientOffsets elematrix
                      in  withArray (map fromIntegral columnStarts) $
                             withArray (map fromIntegral rows) .
                                 (withArray (map realToFrac elements) .) . addElements
@@ -100,6 +95,7 @@ dual model pass = fmap (toEnum . (3 +) . fromIntegral) $ Clp.dual model $ fromIn
 
 instance Foreign.Solver SimplexHandle where
     newModel = Clp.newModel >>= \m -> setLogLevel m None >> return m
+    loadProblem = Clp.loadProblem
     readMps = Clp.readMps
     getObjSense = Clp.getObjSense
     setObjSense = Clp.setObjSense

@@ -12,6 +12,7 @@ module Bindings.Clp.Clp (
     newModel,
     deleteModel,
 
+    loadProblem,
     readMps,
     addRows,
     addColumns,
@@ -64,6 +65,7 @@ type SimplexHandle = Ptr Simplex
 foreign import ccall unsafe "Clp_newModel"       newModel       :: IO SimplexHandle
 foreign import ccall unsafe "&Clp_deleteModel"   deleteModel    :: FunPtr (SimplexHandle -> IO ())
 
+foreign import ccall unsafe "Clp_loadProblem"    loadProblem    :: SimplexHandle -> CInt -> CInt -> Ptr CInt -> Ptr CInt -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> IO ()
 foreign import ccall unsafe "Clp_readMps"        readMps        :: SimplexHandle -> CString -> Bool -> Bool -> IO CInt
 foreign import ccall unsafe "Clp_addRows"        addRows        :: SimplexHandle -> CInt -> Ptr CDouble -> Ptr CDouble -> Ptr CInt -> Ptr CInt -> Ptr CDouble -> IO ()
 foreign import ccall unsafe "Clp_addColumns"     addColumns     :: SimplexHandle -> CInt -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CInt -> Ptr CInt -> Ptr CDouble -> IO ()

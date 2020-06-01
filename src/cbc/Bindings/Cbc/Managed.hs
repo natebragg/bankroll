@@ -5,6 +5,7 @@ module Bindings.Cbc.Managed (
 
     newModel,
 
+    loadProblem,
     readMps,
 
     getObjSense,
@@ -47,6 +48,10 @@ newtype ModelHandle = ModelHandle { runModel :: ForeignPtr Unmanaged.Model }
 
 newModel :: IO ModelHandle
 newModel = Unmanaged.newModel >>= newForeignPtr Unmanaged.deleteModel >>= pure . ModelHandle
+
+loadProblem :: ModelHandle -> CInt -> CInt -> Ptr CInt -> Ptr CInt -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> IO ()
+loadProblem model numcols numrows start index value collb colub obj rowlb rowub = withForeignPtr (runModel model) $ \model ->
+    Unmanaged.loadProblem model numcols numrows start index value collb colub obj rowlb rowub
 
 readMps :: ModelHandle -> CString -> Bool -> Bool -> IO CInt
 readMps model filename keepNames ignoreErrors = withForeignPtr (runModel model) $ \model ->

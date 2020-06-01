@@ -8,6 +8,7 @@ module Bindings.Clp.Managed (
 
     newModel,
 
+    loadProblem,
     readMps,
     addRows,
     addColumns,
@@ -62,6 +63,10 @@ newtype SimplexHandle = SimplexHandle { runModel :: ForeignPtr Unmanaged.Simplex
 
 newModel :: IO SimplexHandle
 newModel = Unmanaged.newModel >>= newForeignPtr Unmanaged.deleteModel >>= pure . SimplexHandle
+
+loadProblem :: SimplexHandle -> CInt -> CInt -> Ptr CInt -> Ptr CInt -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> IO ()
+loadProblem model numcols numrows start index value collb colub obj rowlb rowub = withForeignPtr (runModel model) $ \model ->
+    Unmanaged.loadProblem model numcols numrows start index value collb colub obj rowlb rowub
 
 readMps :: SimplexHandle -> CString -> Bool -> Bool -> IO CInt
 readMps model filename keepNames ignoreErrors = withForeignPtr (runModel model) $ \model ->

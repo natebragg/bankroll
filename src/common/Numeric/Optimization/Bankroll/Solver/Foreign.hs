@@ -8,6 +8,9 @@ import Foreign.C.Types (CDouble(..), CInt(..))
 
 class Solver s where
     newModel :: IO s
+    loadProblem :: s -> CInt -> CInt -> Ptr CInt -> Ptr CInt ->
+                   Ptr CDouble -> Ptr CDouble -> Ptr CDouble ->
+                   Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> IO ()
     readMps :: s -> CString -> Bool -> Bool -> IO CInt
     getObjSense :: s -> IO CDouble
     setObjSense :: s -> CDouble -> IO ()
