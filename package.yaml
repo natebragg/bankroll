@@ -74,7 +74,6 @@ internal-libraries:
     - Numeric.Optimization.Bankroll.Solver.Foreign
     other-modules:
     - Numeric.Algebra.Double
-    - Data.Mapping
     dependencies:
     - algebra
     - pretty

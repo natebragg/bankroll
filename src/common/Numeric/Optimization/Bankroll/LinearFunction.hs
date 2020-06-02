@@ -5,7 +5,6 @@
 
 module Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunction,
-    LinearFunFamily,
     dense,
     sparse,
     coefficients,
@@ -14,8 +13,7 @@ module Numeric.Optimization.Bankroll.LinearFunction (
 ) where
 
 import Data.Function (on)
-import Data.List (groupBy, sortOn, partition)
-import Data.Mapping (Mapping(..))
+import Data.List (groupBy, sortOn)
 import Numeric.Algebra (
     Natural,
     Additive(..),
@@ -111,47 +109,3 @@ transpose fs = normalize $ groupindex $ concat $ zipWith reindex (enumFrom $ toE
             where go _ [] = []
                   go j fs@((i, _):_ ) | j < i = zero    :go (succ j) fs
                   go j    ((_, f):fs)         = sparse f:go (succ j) fs
-
-type LinearFunFamily b = FunFamily b Int Double
-
-newtype FunFamily b i a = FunFamily { unfamily :: [(b, LinFunc i a)] }
-    deriving (Show, Eq, Ord)
-
-instance Mapping (FunFamily b i a) b (LinFunc i a) where
-    lookupBy f   = lookupBy f . unfamily
-    updateBy f k v = FunFamily . updateBy f k v . unfamily
-    deleteBy f   = FunFamily . deleteBy f . unfamily
-
-    fromList = FunFamily
-    elements = elements . unfamily
-
-instance (Eq b, Additive a) => Additive (FunFamily b i a) where
-    fs + f's = FunFamily $ merge $ unfamily fs ++ unfamily f's
-        where merge [] = []
-              merge fs@((b, _):_) =
-                case partition ((==b) . fst) fs of
-                    (bs, unbs) -> (b, foldr1 (+) $ map snd bs):merge unbs
-
-instance (Eq b, Semiring r) => RightModule r (FunFamily b i r) where
-    fs *.    n = FunFamily $ fmap (fmap (*. n)) $ unfamily fs
-
-instance (Eq b, Semiring r) => LeftModule r (FunFamily b i r) where
-    (.*) = flip (*.)
-
-instance (Eq b, Additive r) => RightModule Natural (FunFamily b i r) where
-    m *. n = m *. fromIntegral n
-
-instance (Eq b, Additive r) => LeftModule Natural (FunFamily b i r) where
-    (.*) = (.*) . fromIntegral
-
-instance (Eq b, Additive a) => Monoidal (FunFamily b i a) where
-    zero = FunFamily []
-
-instance (Eq b, Additive r) => RightModule Integer (FunFamily b i r) where
-    m *. n = m *. fromIntegral n
-
-instance (Eq b, Additive r) => LeftModule Integer (FunFamily b i r) where
-    (.*) = (.*) . fromIntegral
-
-instance (Eq b, Ord i, Enum i, Eq a, Group a) => Group (FunFamily b i a) where
-    negate = FunFamily . fmap (fmap negate) . unfamily
