@@ -15,14 +15,13 @@ import Numeric.Optimization.Bankroll.LinearFunction (LinearFunction, dense)
 import Control.Arrow ((***))
 import Data.Foldable (toList)
 import Numeric.Algebra (zero)
-import System.IO.Unsafe (unsafePerformIO)
 
 inf = read "Infinity"
 
 type Solution = LinearFunction
 
 class LinearProgram a where
-    solve :: a -> (Solution, Double)
+    solve :: Solver.MonadSolver m => a -> m (Solution, Double)
 
 type Objective = LinearFunction
 
@@ -53,18 +52,16 @@ data GeneralForm = GeneralForm Solver.OptimizationDirection Objective [GeneralCo
     deriving Show
 
 instance LinearProgram GeneralForm where
-    solve (GeneralForm direction objective constraints) =
+    solve (GeneralForm direction objective constraints) = do
         let elements = map lf constraints
             numcols = maximum $ length objective:map length elements
             (collb, colub) = (zero, dense $ replicate numcols inf)
             (rowlb, rowub) = dense *** dense $ unzip $ map bound constraints
-        in  unsafePerformIO $ do
-        model <- Solver.newModel
-        Solver.setObjSense model direction
-        Solver.loadProblem model elements collb colub objective rowlb rowub
-        status <- Solver.solve model
+        Solver.setObjSense direction
+        Solver.loadProblem elements collb colub objective rowlb rowub
+        status <- Solver.solve
         case status of
-            Solver.Optimal -> (,) <$> Solver.getColSolution model <*> Solver.getObjValue model
+            Solver.Optimal -> (,) <$> Solver.getColSolution <*> Solver.getObjValue
             _ -> return (zero, 0.0)
 
 data StandardConstraint = Lteq LinearFunction Double

@@ -1,17 +1,29 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE FlexibleContexts #-}
+
 module Numeric.Optimization.Bankroll.Solver (
     Foreign.newModel,
     Foreign.isAbandoned,
     Foreign.isProvenOptimal,
 
     Solver(..),
+    model, setModel,
+    evalSolverIO,
+    evalSolver,
+    doSolverIO,
+    doSolver,
+    MonadSolver(..),
     OptimizationDirection(..),
     Status(..),
 ) where
 
+import Control.Monad.IO.Class (MonadIO(liftIO))
+import Control.Monad.State (MonadState, StateT, evalStateT, get, put)
 import Data.Foldable (toList)
-import Foreign.Ptr (nullPtr)
-import Foreign.C.String (withCString)
-import Foreign.Marshal.Array (peekArray, withArray)
+import Foreign.Ptr (nullPtr, Ptr)
+import Foreign.C.String (newCString)
+import Foreign.Marshal.Alloc (free)
+import Foreign.Marshal.Array (peekArray, newArray)
 import Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunction,
     dense,
@@ -20,6 +32,7 @@ import Numeric.Optimization.Bankroll.LinearFunction (
     transpose,
     )
 import qualified Numeric.Optimization.Bankroll.Solver.Foreign as Foreign
+import System.IO.Unsafe (unsafePerformIO)
 
 data OptimizationDirection = Maximize | Ignore | Minimize
     deriving (Eq, Ord, Enum, Show)
@@ -35,58 +48,83 @@ data Status = Event3
             | UserStopped
     deriving (Eq, Ord, Enum, Show)
 
-class Foreign.Solver s => Solver s where
-    readMps :: s -> String -> Bool -> Bool -> IO Int
-    readMps model fn keepNames ignoreErrors =
-        withCString fn $ \fn -> fromIntegral <$> Foreign.readMps model fn keepNames ignoreErrors
+newtype Solver s a = Solver { unSolver :: StateT s IO a }
+    deriving (Functor, Applicative, Monad, MonadIO, MonadState s)
 
-    loadProblem :: s -> [LinearFunction] -> LinearFunction -> LinearFunction -> LinearFunction -> LinearFunction -> LinearFunction -> IO ()
-    loadProblem model values collb colub obj rowlb rowub =
+evalSolverIO :: MonadSolver (Solver s) => Solver s a -> s -> IO a
+evalSolverIO = evalStateT . unSolver
+
+evalSolver :: MonadSolver (Solver s) => Solver s a -> s -> a
+evalSolver = (unsafePerformIO .) . evalSolverIO
+
+doSolverIO :: MonadSolver (Solver s) => Solver s a -> IO a
+doSolverIO m = evalSolverIO (Foreign.newModel >> m) undefined
+
+doSolver :: MonadSolver (Solver s) => Solver s a -> a
+doSolver m = evalSolver (Foreign.newModel >> m) undefined
+
+model :: Solver s s
+model = get
+
+setModel :: s -> Solver s ()
+setModel = put
+
+class (MonadIO m, Foreign.MonadSolver m) => MonadSolver m where
+    readMps :: String -> Bool -> Bool -> m Int
+    readMps fn keepNames ignoreErrors = do
+        fn <- liftIO $ newCString fn
+        r <- fromIntegral <$> Foreign.readMps fn keepNames ignoreErrors
+        liftIO $ free fn
+        return r
+
+    loadProblem :: [LinearFunction] -> LinearFunction -> LinearFunction -> LinearFunction -> LinearFunction -> LinearFunction -> m ()
+    loadProblem values collb colub obj rowlb rowub = do
         let (start, index, value) = coefficientOffsets $ transpose values -- loadProblem expects columns, but values is a list of rows
             [clbc, cubc, objc, rlbc, rubc] = map length [collb, colub, obj, rowlb, rowub]
             numcols = maximum $ clbc:cubc:objc:map length values
             numrows = maximum $ [rlbc, rubc, length values]
             pad n f = if null f then [] else toList f ++ replicate n 0.0
-            withArrayOrNull xs = if null xs then ($ nullPtr) else withArray xs
-        in  withArrayOrNull (map fromIntegral                        start) $ \start ->
-            withArrayOrNull (map fromIntegral                        index) $ \index ->
-            withArrayOrNull (map realToFrac                          value) $ \value ->
-            withArrayOrNull (map realToFrac   $ pad (numcols - clbc) collb) $ \collb ->
-            withArrayOrNull (map realToFrac   $ pad (numcols - cubc) colub) $ \colub ->
-            withArrayOrNull (map realToFrac   $ pad (numcols - objc) obj  ) $ \obj   ->
-            withArrayOrNull (map realToFrac   $ pad (numrows - rlbc) rowlb) $ \rowlb ->
-            withArrayOrNull (map realToFrac   $ pad (numrows - rubc) rowub) $ \rowub ->
-                Foreign.loadProblem model (fromIntegral numcols) (fromIntegral numrows) start index value collb colub obj rowlb rowub
+            newArrayOrNull xs = if null xs then pure nullPtr else liftIO $ newArray xs
+        start <- newArrayOrNull (map fromIntegral                      start)
+        index <- newArrayOrNull (map fromIntegral                      index)
+        value <- newArrayOrNull (map realToFrac                        value)
+        collb <- newArrayOrNull (map realToFrac $ pad (numcols - clbc) collb)
+        colub <- newArrayOrNull (map realToFrac $ pad (numcols - cubc) colub)
+        obj   <- newArrayOrNull (map realToFrac $ pad (numcols - objc) obj  )
+        rowlb <- newArrayOrNull (map realToFrac $ pad (numrows - rlbc) rowlb)
+        rowub <- newArrayOrNull (map realToFrac $ pad (numrows - rubc) rowub)
+        Foreign.loadProblem (fromIntegral numcols) (fromIntegral numrows) start index value collb colub obj rowlb rowub
+        liftIO $ do free start; free index; free value; free collb; free colub; free obj; free rowlb; free rowub
 
-    getObjSense :: s -> IO OptimizationDirection
-    getObjSense model = toEnum <$> truncate <$> (1.0 +) <$> Foreign.getObjSense model
+    getObjSense :: m OptimizationDirection
+    getObjSense = toEnum <$> truncate <$> (1.0 +) <$> Foreign.getObjSense
 
-    setObjSense model dir = Foreign.setObjSense model $ (fromIntegral $ fromEnum dir) - 1.0
-    setObjSense :: s -> OptimizationDirection -> IO ()
+    setObjSense :: OptimizationDirection -> m ()
+    setObjSense dir = Foreign.setObjSense $ (fromIntegral $ fromEnum dir) - 1.0
 
-    rowBounds :: s -> IO [(Double, Double)]
-    rowBounds model = do
-        nr <- fromIntegral <$> Foreign.getNumRows model
-        rl <- map realToFrac <$> (peekArray nr =<< Foreign.getRowLower model)
-        ru <- map realToFrac <$> (peekArray nr =<< Foreign.getRowUpper model)
+    rowBounds :: m [(Double, Double)]
+    rowBounds = do
+        nr <- getNumRows
+        rl <- map realToFrac <$> (liftIO . peekArray nr =<< Foreign.getRowLower)
+        ru <- map realToFrac <$> (liftIO . peekArray nr =<< Foreign.getRowUpper)
         return $ zip rl ru
 
-    columnBounds :: s -> IO [(Double, Double, Double)]
-    columnBounds model = do
-        nc <- fromIntegral <$> Foreign.getNumCols model
-        cl <- map realToFrac <$> (peekArray nc =<< Foreign.getColLower model)
-        cu <- map realToFrac <$> (peekArray nc =<< Foreign.getColUpper model)
-        ob <- map realToFrac <$> (peekArray nc =<< Foreign.getObjCoefficients model)
+    columnBounds :: m [(Double, Double, Double)]
+    columnBounds = do
+        nc <- getNumCols
+        cl <- map realToFrac <$> (liftIO . peekArray nc =<< Foreign.getColLower)
+        cu <- map realToFrac <$> (liftIO . peekArray nc =<< Foreign.getColUpper)
+        ob <- map realToFrac <$> (liftIO . peekArray nc =<< Foreign.getObjCoefficients)
         return $ zip3 cl cu ob
 
-    getElements :: s -> IO [LinearFunction]
-    getElements model = do
-        ne <- fromIntegral <$> Foreign.getNumElements model
-        is <- map fromIntegral <$> (peekArray ne =<< Foreign.getIndices model)
-        es <- map realToFrac <$> (peekArray ne =<< Foreign.getElements model)
-        nc <- fromIntegral <$> Foreign.getNumCols model
-        vs <- map fromIntegral <$> (peekArray nc =<< Foreign.getVectorStarts model)
-        vl <- map fromIntegral <$> (peekArray nc =<< Foreign.getVectorLengths model)
+    getElements :: m [LinearFunction]
+    getElements = do
+        ne <- fromIntegral <$> Foreign.getNumElements
+        is <- map fromIntegral <$> (liftIO . peekArray ne =<< Foreign.getIndices)
+        es <- map realToFrac   <$> (liftIO . peekArray ne =<< Foreign.getElements)
+        nc <- getNumCols
+        vs <- map fromIntegral <$> (liftIO . peekArray nc =<< Foreign.getVectorStarts)
+        vl <- map fromIntegral <$> (liftIO . peekArray nc =<< Foreign.getVectorLengths)
         return $ map sparse $ segment 0 (zip vs vl) (zip is es)
         where segment :: Int -> [(Int, Int)] -> [a] -> [[a]]
               segment _ [] _ = [] -- There may be extraneous trailing elements.
@@ -94,24 +132,24 @@ class Foreign.Solver s => Solver s where
               segment i ((j, n):sls) as = a:segment (j + n) sls as'
                   where (a, as') = splitAt n $ drop (j - i) as
 
-    getObjValue :: s -> IO Double
-    getObjValue = (fmap realToFrac) . Foreign.getObjValue
+    getObjValue :: m Double
+    getObjValue = realToFrac <$> Foreign.getObjValue
 
-    solve :: s -> IO Status
-    solve model = fmap (toEnum . (3 +) . fromIntegral) $ Foreign.initialSolve model
+    solve :: m Status
+    solve = fmap (toEnum . (3 +) . fromIntegral) $ Foreign.initialSolve
 
-    getNumRows :: s -> IO Int
-    getNumRows = (fmap fromIntegral) . Foreign.getNumRows
+    getNumRows :: m Int
+    getNumRows = fromIntegral <$> Foreign.getNumRows
 
-    getNumCols :: s -> IO Int
-    getNumCols = (fmap fromIntegral) . Foreign.getNumCols
+    getNumCols :: m Int
+    getNumCols = fromIntegral <$> Foreign.getNumCols
 
-    getRowActivity :: s -> IO LinearFunction
-    getRowActivity model = do
-        nr <- fromIntegral <$> Foreign.getNumRows model
-        dense <$> map realToFrac <$> (peekArray nr =<< Foreign.getRowActivity model)
+    getRowActivity :: m LinearFunction
+    getRowActivity = do
+        nr <- getNumRows
+        dense <$> map realToFrac <$> (liftIO . peekArray nr =<< Foreign.getRowActivity)
 
-    getColSolution :: s -> IO LinearFunction
-    getColSolution model = do
-        nc <- fromIntegral <$> Foreign.getNumCols model
-        dense <$> map realToFrac <$> (peekArray nc =<< Foreign.getColSolution model)
+    getColSolution :: m LinearFunction
+    getColSolution = do
+        nc <- getNumCols
+        dense <$> map realToFrac <$> (liftIO . peekArray nc =<< Foreign.getColSolution)

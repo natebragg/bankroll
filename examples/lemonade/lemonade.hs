@@ -1,8 +1,11 @@
 module Main where
 
+import Control.Monad (forM, when)
+import Control.Monad.IO.Class (liftIO)
 import qualified Numeric.Optimization.Clp.Clp as Clp
 import Numeric.Optimization.Bankroll.LinearFunction (dense, coefficients)
-import Control.Monad (forM, when)
+import Numeric.Optimization.Bankroll.Program (Solution, GeneralForm(..), (<=$), solve)
+import Numeric.Optimization.Bankroll.Pretty (renderEqn)
 import System.Exit (exitWith, ExitCode(ExitFailure))
 import Text.Printf (printf)
 
@@ -13,60 +16,60 @@ _DBL_MAX = encodeFloat s e
           e = (snd $ floatRange v) - d
           s = r ^ d - 1
 
-input_by_columns :: Clp.SimplexHandle -> IO ()
-input_by_columns model =
+input_by_columns :: Clp.SimplexSolver ()
+input_by_columns =
     let rowBounds = [(0.0, 60.0),  -- Time
                      (0.0, 200.0), -- Lemons
                      (0.0, 250.0), -- Sugar
                      (0.0, 240.0), -- Water
                      (0.0, 50.0)]  -- Vodka
     in do
-    Clp.addRows model rowBounds []
+    Clp.addRows rowBounds []
 
     -- Regular
     let columnBounds = [(0.0, _DBL_MAX, 1.0)]
         elements = [dense [0.25, 1.0, 2.0, 2.0, 0.0]]
-    Clp.addColumns model columnBounds elements
+    Clp.addColumns columnBounds elements
 
     -- Special
     let columnBounds = [(0.0, _DBL_MAX, 2.0)]
         elements = [dense [0.5, 1.0, 1.25, 0.6, 0.5]]
-    Clp.addColumns model columnBounds elements
+    Clp.addColumns columnBounds elements
 
-input_by_rows :: Clp.SimplexHandle -> IO ()
-input_by_rows model =
+input_by_rows :: Clp.SimplexSolver ()
+input_by_rows =
     let columnBounds = [(0.0, _DBL_MAX, 1.0), -- Regular
                         (0.0, _DBL_MAX, 2.0)] -- Special
     in do
-    Clp.addColumns model columnBounds []
+    Clp.addColumns columnBounds []
 
     -- Time
     let rowBounds = [(0.0, 60.0)]
         elements = [dense [0.25, 0.5]]
-    Clp.addRows model rowBounds elements
+    Clp.addRows rowBounds elements
 
     -- Lemons
     let rowBounds = [(0.0, 200.0)]
         elements = [dense [1.0, 1.0]]
-    Clp.addRows model rowBounds elements
+    Clp.addRows rowBounds elements
 
     -- Sugar
     let rowBounds = [(0.0, 250.0)]
         elements = [dense [2.0, 1.25]]
-    Clp.addRows model rowBounds elements
+    Clp.addRows rowBounds elements
 
     -- Water
     let rowBounds = [(0.0, 240.0)]
         elements = [dense [2.0, 0.6]]
-    Clp.addRows model rowBounds elements
+    Clp.addRows rowBounds elements
 
     -- Vodka
     let rowBounds = [(0.0, 50.0)]
         elements = [dense [0.0, 0.5]]
-    Clp.addRows model rowBounds elements
+    Clp.addRows rowBounds elements
 
-input_by_problem :: Clp.SimplexHandle -> IO ()
-input_by_problem model =
+input_by_problem :: Clp.SimplexSolver ()
+input_by_problem =
     let --             Regular   Special
         vals = [dense [0.25,     0.5     ], -- Time
                 dense [1.0,      1.0     ], -- Lemons
@@ -79,43 +82,55 @@ input_by_problem model =
         --             Time  Lemons Sugar  Water  Vodka
         rowlb = dense [0.0,  0.0,   0.0,   0.0,   0.0 ]
         rowub = dense [60.0, 200.0, 250.0, 240.0, 50.0]
-    in  Clp.loadProblem model vals collb colub obj rowlb rowub
+    in  Clp.loadProblem vals collb colub obj rowlb rowub
 
-input_by_file :: Clp.SimplexHandle -> IO ()
-input_by_file model = do
-    status <- Clp.readMps model "lemonade.mps" True False
+solve_general_form :: IO ()
+solve_general_form =
+    let --             Regular   Special
+        obj =   dense [1.0,      2.0     ]
+        cs  =  [dense [0.25,     0.5     ] <=$  60.0, -- Time
+                dense [1.0,      1.0     ] <=$ 200.0, -- Lemons
+                dense [2.0,      1.25    ] <=$ 250.0, -- Sugar
+                dense [2.0,      0.6     ] <=$ 240.0, -- Water
+                dense [0.0,      0.5     ] <=$  50.0] -- Vodka
+        solver = solve (GeneralForm Clp.Maximize obj cs) :: Clp.SimplexSolver (Solution, Double)
+        (s, v) = Clp.doSolver solver
+    in  printf "Solution: %s = %s\n" (show v) (renderEqn ["Regular", "Special"] s)
+
+input_by_file :: Clp.SimplexSolver ()
+input_by_file = do
+    status <- Clp.readMps "lemonade.mps" True False
     when (status /= 0) $
-        exitWith $ ExitFailure status
+        liftIO $ exitWith $ ExitFailure status
 
 main :: IO [()]
-main = do
-    model <- Clp.newModel
-    Clp.setLogLevel model Clp.None
+main = Clp.doSolverIO $ do
+    Clp.setLogLevel Clp.None
 
-    input_by_problem model
+    input_by_problem
 
-    Clp.setObjSense model Clp.Maximize
+    Clp.setObjSense Clp.Maximize
 
-    status <- Clp.solve model
+    status <- Clp.solve
     when (status /= Clp.Optimal) $
-        exitWith $ ExitFailure $ fromEnum status
+        liftIO $ exitWith $ ExitFailure $ fromEnum status
 
-    printf "Solution: opt %s, ppi %s, pdi %s, plr %s, dlr %s, ilr %s, abn %s\n"
-       <$> (show <$> Clp.isProvenOptimal model)
-       <*> (show <$> Clp.isProvenPrimalInfeasible model)
-       <*> (show <$> Clp.isProvenDualInfeasible model)
-       <*> (show <$> Clp.isPrimalObjectiveLimitReached model)
-       <*> (show <$> Clp.isDualObjectiveLimitReached model)
-       <*> (show <$> Clp.isIterationLimitReached model)
-       <*> (show <$> Clp.isAbandoned model)
-       >>= id
+    ipo   <- Clp.isProvenOptimal
+    ippi  <- Clp.isProvenPrimalInfeasible
+    ipdi  <- Clp.isProvenDualInfeasible
+    ipolr <- Clp.isPrimalObjectiveLimitReached
+    idolr <- Clp.isDualObjectiveLimitReached
+    iilr  <- Clp.isIterationLimitReached
+    ia    <- Clp.isAbandoned
+    liftIO $ printf "Solution: opt %s, ppi %s, pdi %s, plr %s, dlr %s, ilr %s, abn %s\n"
+       (show ipo) (show ippi) (show ipdi) (show ipolr) (show idolr) (show iilr) (show ia)
 
-    pr <- Clp.getRowActivity model
+    pr <- Clp.getRowActivity
     forM (enumerate pr) $ \(row, pr_row) ->
-        printf "row %d, value %f\n" row pr_row
+        liftIO $ printf "row %d, value %f\n" row pr_row
 
-    pc <- Clp.getColSolution model
+    pc <- Clp.getColSolution
     forM (enumerate pc) $ \(col, pc_col) ->
-        printf "col %d, solution %f\n" col pc_col
+        liftIO $ printf "col %d, solution %f\n" col pc_col
 
     where enumerate = uncurry zip . coefficients

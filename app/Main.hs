@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Monad (forM, when)
+import Control.Monad.IO.Class (liftIO)
 import System.Console.GetOpt (usageInfo, getOpt, OptDescr(..), ArgDescr(..), ArgOrder(RequireOrder))
 import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure, exitWith, ExitCode(ExitFailure))
@@ -44,44 +45,40 @@ handleArgs = do
         ( _, _, es@(_:_)) -> printErrors es >> exitFailure
         (os, [fn], []) -> return fn
 
-input_by_file :: Clp.SimplexHandle -> String -> IO ()
-input_by_file model fn = do
-    status <- Clp.readMps model fn True False
-    when (status /= 0) $
-        exitWith $ ExitFailure status
-
 enumerate = uncurry zip . coefficients
 
 main :: IO ()
-main = do
-    fn <- handleArgs
-    model <- Clp.newModel
-    Clp.setLogLevel model Clp.None
+main = Clp.doSolverIO $ do
+    fn <- liftIO handleArgs
+    Clp.newModel
+    Clp.setLogLevel Clp.None
 
-    input_by_file model fn
+    status <- Clp.readMps fn True False
+    when (status /= 0) $
+        liftIO $ exitWith $ ExitFailure status
 
-    Clp.setObjSense model Clp.Maximize
+    Clp.setObjSense Clp.Maximize
 
-    status <- Clp.solve model
+    status <- Clp.solve
     when (status /= Clp.Optimal) $
-        exitWith $ ExitFailure $ fromEnum status
+        liftIO $ exitWith $ ExitFailure $ fromEnum status
 
-    printf "Solution: opt %s, ppi %s, pdi %s, plr %s, dlr %s, ilr %s, abn %s\n"
-       <$> (show <$> Clp.isProvenOptimal model)
-       <*> (show <$> Clp.isProvenPrimalInfeasible model)
-       <*> (show <$> Clp.isProvenDualInfeasible model)
-       <*> (show <$> Clp.isPrimalObjectiveLimitReached model)
-       <*> (show <$> Clp.isDualObjectiveLimitReached model)
-       <*> (show <$> Clp.isIterationLimitReached model)
-       <*> (show <$> Clp.isAbandoned model)
-       >>= id
+    ipo   <- Clp.isProvenOptimal
+    ippi  <- Clp.isProvenPrimalInfeasible
+    ipdi  <- Clp.isProvenDualInfeasible
+    ipolr <- Clp.isPrimalObjectiveLimitReached
+    idolr <- Clp.isDualObjectiveLimitReached
+    iilr  <- Clp.isIterationLimitReached
+    ia    <- Clp.isAbandoned
+    liftIO $ printf "Solution: opt %s, ppi %s, pdi %s, plr %s, dlr %s, ilr %s, abn %s\n"
+       (show ipo) (show ippi) (show ipdi) (show ipolr) (show idolr) (show iilr) (show ia)
 
-    pr <- Clp.getRowActivity model
+    pr <- Clp.getRowActivity
     forM (enumerate pr) $ \(row, pr_row) ->
-        printf "row %d, value %f\n" row pr_row
+        liftIO $ printf "row %d, value %f\n" row pr_row
 
-    pc <- Clp.getColSolution model
+    pc <- Clp.getColSolution
     forM (enumerate pc) $ \(col, pc_col) ->
-        printf "col %d, solution %f\n" col pc_col
+        liftIO $ printf "col %d, solution %f\n" col pc_col
 
     return ()

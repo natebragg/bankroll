@@ -1,4 +1,9 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Numeric.Optimization.Clp.Clp (
+    SimplexSolver,
+
     version,
     versionMajor,
     versionMinor,
@@ -13,32 +18,34 @@ module Numeric.Optimization.Clp.Clp (
     Pass(..),
     dual,
 
-    module Bindings.Clp.Managed,
-    module Solver,
-    Solver.Solver(..)
-) where
-
-import Bindings.Clp.Managed (
-    SimplexHandle,
-
     isProvenPrimalInfeasible,
     isProvenDualInfeasible,
     isPrimalObjectiveLimitReached,
     isDualObjectiveLimitReached,
     isIterationLimitReached,
-    )
+
+    module Solver,
+    Solver.Solver(..)
+) where
+
 import qualified Bindings.Clp.Managed as Clp
 import Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunction,
     coefficientOffsets,
     )
 
+import Control.Monad.IO.Class (MonadIO(liftIO))
 import Foreign.Ptr (nullPtr)
 import Foreign.C.String (peekCString)
-import Foreign.Marshal.Array (withArray, withArrayLen)
+import Foreign.Marshal.Alloc (free)
+import Foreign.Marshal.Array (newArray)
 import System.IO.Unsafe (unsafePerformIO)
 import Numeric.Optimization.Bankroll.Solver as Solver
 import qualified Numeric.Optimization.Bankroll.Solver.Foreign as Foreign
+
+type SimplexSolver = Solver Clp.SimplexHandle
+
+withModel f = model >>= liftIO . f
 
 version :: String
 version = unsafePerformIO $ peekCString Clp.version
@@ -52,70 +59,79 @@ versionMinor = fromIntegral Clp.versionMinor
 versionRelease :: Int
 versionRelease = fromIntegral Clp.versionRelease
 
-addRows :: SimplexHandle -> [(Double, Double)] -> [LinearFunction] -> IO ()
-addRows model bounds elematrix =
-    let (rowLower, rowUpper) = unzip bounds
-    in  withArrayLen (map realToFrac rowLower) $ \num_rows rowLower ->
-        withArray (map realToFrac rowUpper) $ \rowUpper ->
-            let addElements = Clp.addRows model (fromIntegral num_rows) rowLower rowUpper
-            in  case elematrix of
-                [] -> addElements nullPtr nullPtr nullPtr
-                _ -> let (rowStarts, columns, elements) = coefficientOffsets elematrix
-                     in  withArray (map fromIntegral rowStarts) $
-                            withArray (map fromIntegral columns) .
-                                (withArray (map realToFrac elements) .) . addElements
+addRows :: [(Double, Double)] -> [LinearFunction] -> SimplexSolver ()
+addRows bounds values = do
+    let (rowlb, rowub) = unzip bounds
+        numrows = fromIntegral $ length bounds
+        (start, index, value) = coefficientOffsets values
+        newArrayOrNull xs = if null xs then pure nullPtr else liftIO $ newArray xs
+    rowlb <- newArrayOrNull (map realToFrac   rowlb)
+    rowub <- newArrayOrNull (map realToFrac   rowub)
+    start <- newArrayOrNull (map fromIntegral start)
+    index <- newArrayOrNull (map fromIntegral index)
+    value <- newArrayOrNull (map realToFrac   value)
+    withModel $ \m -> Clp.addRows m numrows rowlb rowub start index value
+    liftIO $ do free rowlb; free rowub; free start; free index; free value
 
-addColumns :: SimplexHandle -> [(Double, Double, Double)] -> [LinearFunction] -> IO ()
-addColumns model bounds elematrix =
-    let (columnLower, columnUpper, objective) = unzip3 bounds
-    in  withArrayLen (map realToFrac columnLower) $ \num_cols columnLower ->
-        withArray (map realToFrac columnUpper) $ \columnUpper ->
-        withArray (map realToFrac objective) $ \objective ->
-            let addElements = Clp.addColumns model (fromIntegral num_cols) columnLower columnUpper objective
-            in case elematrix of
-                [] -> addElements nullPtr nullPtr nullPtr
-                _ -> let (columnStarts, rows, elements) = coefficientOffsets elematrix
-                     in  withArray (map fromIntegral columnStarts) $
-                            withArray (map fromIntegral rows) .
-                                (withArray (map realToFrac elements) .) . addElements
+addColumns :: [(Double, Double, Double)] -> [LinearFunction] -> SimplexSolver ()
+addColumns bounds values = do
+    let (collb, colub, obj) = unzip3 bounds
+        (start, index, value) = coefficientOffsets values
+        numcols = fromIntegral $ length bounds
+        newArrayOrNull xs = if null xs then pure nullPtr else liftIO $ newArray xs
+    collb <- newArrayOrNull (map realToFrac   collb)
+    colub <- newArrayOrNull (map realToFrac   colub)
+    obj   <- newArrayOrNull (map realToFrac   obj  )
+    start <- newArrayOrNull (map fromIntegral start)
+    index <- newArrayOrNull (map fromIntegral index)
+    value <- newArrayOrNull (map realToFrac   value)
+    withModel $ \m -> Clp.addColumns m numcols collb colub obj start index value
+    liftIO $ do free collb; free colub; free obj; free start; free index; free value
 
 data LogLevel = None | Final | Factorizations | PlusABitMore | Verbose
     deriving (Eq, Ord, Enum, Show)
 
-setLogLevel :: SimplexHandle -> LogLevel -> IO ()
-setLogLevel model level = Clp.setLogLevel model $ fromIntegral $ fromEnum level
+setLogLevel :: LogLevel -> SimplexSolver ()
+setLogLevel level = withModel $ \m -> Clp.setLogLevel m $ fromIntegral $ fromEnum level
 
 data Pass = Initial
           | ValuesPass
           | Cleanup
     deriving (Eq, Ord, Enum, Show)
 
-dual :: SimplexHandle -> Pass -> IO Status
-dual model pass = fmap (toEnum . (3 +) . fromIntegral) $ Clp.dual model $ fromIntegral $ fromEnum pass
+dual :: Pass -> SimplexSolver Status
+dual pass = withModel $ \m -> fmap (toEnum . (3 +) . fromIntegral) $ Clp.dual m $ fromIntegral $ fromEnum pass
 
-instance Foreign.Solver SimplexHandle where
-    newModel = Clp.newModel >>= \m -> setLogLevel m None >> return m
-    loadProblem = Clp.loadProblem
-    readMps = Clp.readMps
-    getObjSense = Clp.getObjSense
-    setObjSense = Clp.setObjSense
-    getRowLower = Clp.getRowLower
-    getRowUpper = Clp.getRowUpper
-    getObjCoefficients = Clp.getObjCoefficients
-    getColLower = Clp.getColLower
-    getColUpper = Clp.getColUpper
-    getNumElements = Clp.getNumElements
-    getVectorStarts = Clp.getVectorStarts
-    getIndices = Clp.getIndices
-    getVectorLengths = Clp.getVectorLengths
-    getElements = Clp.getElements
-    getObjValue = Clp.getObjValue
-    initialSolve = Clp.initialSolve
-    getNumRows = Clp.getNumRows
-    getNumCols = Clp.getNumCols
-    isAbandoned = Clp.isAbandoned
-    isProvenOptimal = Clp.isProvenOptimal
-    getRowActivity = Clp.getRowActivity
-    getColSolution = Clp.getColSolution
+isProvenPrimalInfeasible      = withModel Clp.isProvenPrimalInfeasible
+isProvenDualInfeasible        = withModel Clp.isProvenDualInfeasible
+isPrimalObjectiveLimitReached = withModel Clp.isPrimalObjectiveLimitReached
+isDualObjectiveLimitReached   = withModel Clp.isDualObjectiveLimitReached
+isIterationLimitReached       = withModel Clp.isIterationLimitReached
 
-instance Solver SimplexHandle
+instance Foreign.MonadSolver SimplexSolver where
+    newModel           = liftIO Clp.newModel >>= setModel >> setLogLevel None
+    loadProblem nc nr s i v cl cu o rl ru =
+                         withModel $ \m -> Clp.loadProblem m nc nr s i v cl cu o rl ru
+    readMps f k i      = withModel $ \m -> Clp.readMps m f k i
+    getObjSense        = withModel Clp.getObjSense
+    setObjSense s      = withModel $ \m -> Clp.setObjSense m s
+    getRowLower        = withModel Clp.getRowLower
+    getRowUpper        = withModel Clp.getRowUpper
+    getObjCoefficients = withModel Clp.getObjCoefficients
+    getColLower        = withModel Clp.getColLower
+    getColUpper        = withModel Clp.getColUpper
+    getNumElements     = withModel Clp.getNumElements
+    getVectorStarts    = withModel Clp.getVectorStarts
+    getIndices         = withModel Clp.getIndices
+    getVectorLengths   = withModel Clp.getVectorLengths
+    getElements        = withModel Clp.getElements
+    getObjValue        = withModel Clp.getObjValue
+    initialSolve       = withModel Clp.initialSolve
+    getNumRows         = withModel Clp.getNumRows
+    getNumCols         = withModel Clp.getNumCols
+    isAbandoned        = withModel Clp.isAbandoned
+    isProvenOptimal    = withModel Clp.isProvenOptimal
+    getRowActivity     = withModel Clp.getRowActivity
+    getColSolution     = withModel Clp.getColSolution
+
+instance MonadSolver SimplexSolver
