@@ -8,11 +8,10 @@ module Numeric.Optimization.Bankroll.Solver (
     Status(..),
 ) where
 
-import Control.Monad (join)
 import Data.Foldable (toList)
 import Foreign.Ptr (nullPtr)
 import Foreign.C.String (withCString)
-import Foreign.Marshal.Array (peekArray, newArray)
+import Foreign.Marshal.Array (peekArray, withArray)
 import Numeric.Optimization.Bankroll.LinearFunction (LinearFunction, dense, sparse, coefficientOffsets)
 import qualified Numeric.Optimization.Bankroll.Solver.Foreign as Foreign
 
@@ -42,16 +41,16 @@ class Foreign.Solver s => Solver s where
             numcols = maximum $ clbc:cubc:objc:map length values
             numrows = maximum $ [rlbc, rubc, length values]
             pad n f = if null f then [] else toList f ++ replicate n 0.0
-            newArrayOrNull xs = if null xs then pure nullPtr else newArray xs
-        in  join $ Foreign.loadProblem model (fromIntegral numcols) (fromIntegral numrows)
-                <$> newArrayOrNull (map fromIntegral                        start)
-                <*> newArrayOrNull (map fromIntegral                        index)
-                <*> newArrayOrNull (map realToFrac                          value)
-                <*> newArrayOrNull (map realToFrac   $ pad (numcols - clbc) collb)
-                <*> newArrayOrNull (map realToFrac   $ pad (numcols - cubc) colub)
-                <*> newArrayOrNull (map realToFrac   $ pad (numcols - objc) obj  )
-                <*> newArrayOrNull (map realToFrac   $ pad (numrows - rlbc) rowlb)
-                <*> newArrayOrNull (map realToFrac   $ pad (numrows - rubc) rowub)
+            withArrayOrNull xs = if null xs then ($ nullPtr) else withArray xs
+        in  withArrayOrNull (map fromIntegral                        start) $ \start ->
+            withArrayOrNull (map fromIntegral                        index) $ \index ->
+            withArrayOrNull (map realToFrac                          value) $ \value ->
+            withArrayOrNull (map realToFrac   $ pad (numcols - clbc) collb) $ \collb ->
+            withArrayOrNull (map realToFrac   $ pad (numcols - cubc) colub) $ \colub ->
+            withArrayOrNull (map realToFrac   $ pad (numcols - objc) obj  ) $ \obj   ->
+            withArrayOrNull (map realToFrac   $ pad (numrows - rlbc) rowlb) $ \rowlb ->
+            withArrayOrNull (map realToFrac   $ pad (numrows - rubc) rowub) $ \rowub ->
+                Foreign.loadProblem model (fromIntegral numcols) (fromIntegral numrows) start index value collb colub obj rowlb rowub
 
     getObjSense :: s -> IO OptimizationDirection
     getObjSense model = toEnum <$> truncate <$> (1.0 +) <$> Foreign.getObjSense model
