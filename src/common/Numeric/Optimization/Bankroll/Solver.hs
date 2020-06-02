@@ -12,7 +12,13 @@ import Data.Foldable (toList)
 import Foreign.Ptr (nullPtr)
 import Foreign.C.String (withCString)
 import Foreign.Marshal.Array (peekArray, withArray)
-import Numeric.Optimization.Bankroll.LinearFunction (LinearFunction, dense, sparse, coefficientOffsets)
+import Numeric.Optimization.Bankroll.LinearFunction (
+    LinearFunction,
+    dense,
+    sparse,
+    coefficientOffsets,
+    transpose,
+    )
 import qualified Numeric.Optimization.Bankroll.Solver.Foreign as Foreign
 
 data OptimizationDirection = Maximize | Ignore | Minimize
@@ -36,7 +42,7 @@ class Foreign.Solver s => Solver s where
 
     loadProblem :: s -> [LinearFunction] -> LinearFunction -> LinearFunction -> LinearFunction -> LinearFunction -> LinearFunction -> IO ()
     loadProblem model values collb colub obj rowlb rowub =
-        let (start, index, value) = coefficientOffsets values
+        let (start, index, value) = coefficientOffsets $ transpose values -- loadProblem expects columns, but values is a list of rows
             [clbc, cubc, objc, rlbc, rubc] = map length [collb, colub, obj, rowlb, rowub]
             numcols = maximum $ clbc:cubc:objc:map length values
             numrows = maximum $ [rlbc, rubc, length values]

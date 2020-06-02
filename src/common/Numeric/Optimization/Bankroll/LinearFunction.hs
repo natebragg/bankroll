@@ -10,10 +10,11 @@ module Numeric.Optimization.Bankroll.LinearFunction (
     sparse,
     coefficients,
     coefficientOffsets,
+    transpose,
 ) where
 
-import Control.Arrow (second)
-import Data.List (sortOn, partition)
+import Data.Function (on)
+import Data.List (groupBy, sortOn, partition)
 import Data.Mapping (Mapping(..))
 import Numeric.Algebra (
     Natural,
@@ -100,6 +101,16 @@ coefficientOffsets :: [LinFunc i a] -> ([Int], [i], [a])
 coefficientOffsets fs = (offs, concat is, concat as)
     where offs = scanl (+) 0 $ map length is
           (is, as) = unzip $ map coefficients fs
+
+transpose :: (Ord i, Enum i, Eq a, Monoidal a) => [LinFunc i a] -> [LinFunc i a]
+transpose fs = normalize $ groupindex $ concat $ zipWith reindex (enumFrom $ toEnum 0) fs
+    where reindex j (LinFunc cs) = map (fmap $ (,) j) cs
+          groupindex = map ((\(a:_, bs) -> (a, bs)) . unzip) .
+                       groupBy ((==) `on` fst) . sortOn fst
+          normalize = go (toEnum 0)
+            where go _ [] = []
+                  go j fs@((i, _):_ ) | j < i = zero    :go (succ j) fs
+                  go j    ((_, f):fs)         = sparse f:go (succ j) fs
 
 type LinearFunFamily b = FunFamily b Int Double
 

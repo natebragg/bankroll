@@ -65,6 +65,22 @@ input_by_rows model =
         elements = [dense [0.0, 0.5]]
     Clp.addRows model rowBounds elements
 
+input_by_problem :: Clp.SimplexHandle -> IO ()
+input_by_problem model =
+    let --             Regular   Special
+        vals = [dense [0.25,     0.5     ], -- Time
+                dense [1.0,      1.0     ], -- Lemons
+                dense [2.0,      1.25    ], -- Sugar
+                dense [2.0,      0.6     ], -- Water
+                dense [0.0,      0.5     ]] -- Vodka
+        collb = dense [0.0,      0.0     ]
+        colub = dense [_DBL_MAX, _DBL_MAX]
+        obj   = dense [1.0,      2.0     ]
+        --             Time  Lemons Sugar  Water  Vodka
+        rowlb = dense [0.0,  0.0,   0.0,   0.0,   0.0 ]
+        rowub = dense [60.0, 200.0, 250.0, 240.0, 50.0]
+    in  Clp.loadProblem model vals collb colub obj rowlb rowub
+
 input_by_file :: Clp.SimplexHandle -> IO ()
 input_by_file model = do
     status <- Clp.readMps model "lemonade.mps" True False
@@ -76,7 +92,7 @@ main = do
     model <- Clp.newModel
     Clp.setLogLevel model Clp.None
 
-    input_by_rows model
+    input_by_problem model
 
     Clp.setObjSense model Clp.Maximize
 
