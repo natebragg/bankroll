@@ -12,6 +12,7 @@ module Numeric.Optimization.Bankroll.Program (
 import qualified Numeric.Optimization.Bankroll.Solver as Solver
 import Numeric.Optimization.Bankroll.LinearFunction (LinearFunction, dense)
 
+import Control.Arrow ((***))
 import Data.Foldable (toList)
 import Numeric.Algebra (zero)
 import System.IO.Unsafe (unsafePerformIO)
@@ -54,16 +55,13 @@ data GeneralForm = GeneralForm Solver.OptimizationDirection Objective [GeneralCo
 instance LinearProgram GeneralForm where
     solve (GeneralForm direction objective constraints) =
         let elements = map lf constraints
-            row_length = maximum $ 0:map length elements
-            obj_dec = toList objective
-            columnBounds = [(0.0, inf, obj) | obj <- obj_dec] ++
-                           replicate (row_length - length obj_dec) (0.0, inf, 0.0)
-            rowBounds = map bound constraints
+            numcols = maximum $ length objective:map length elements
+            (collb, colub) = (zero, dense $ replicate numcols inf)
+            (rowlb, rowub) = dense *** dense $ unzip $ map bound constraints
         in  unsafePerformIO $ do
         model <- Solver.newModel
         Solver.setObjSense model direction
-        Solver.addColumns model columnBounds []
-        Solver.addRows model rowBounds elements
+        Solver.loadProblem model elements collb colub objective rowlb rowub
         status <- Solver.solve model
         case status of
             Solver.Optimal -> (,) <$> Solver.getColSolution model <*> Solver.getObjValue model
