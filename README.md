@@ -18,7 +18,10 @@ Then to build, just run:
 
     stack build
 
-Ratl can then be run:
+Bankroll can then be run:
 
-    stack exec bankroll examples/lemonade.mps
+    stack exec bankroll examples/lemonade/lemonade.mps
 
+The frontend defaults to CLP, but can use CBC as such:
+
+    stack exec bankroll -- -s Cbc examples/lemonade/lemonade.mps
