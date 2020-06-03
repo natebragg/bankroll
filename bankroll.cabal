@@ -1,0 +1,145 @@
+cabal-version: 3.0
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: fcccdc9e39ee682db8c18739eda9455179ca19e3ea74ab5f11ca98124fae92b7
+
+name:           bankroll
+version:        1.0.0.0
+synopsis:       Wrapper for COIN-OR CLP and CBC
+description:    Please see the README on GitHub at <https://github.com/natebragg/bankroll#readme>
+category:       Numeric, Optimisation, Optimization
+homepage:       https://github.com/natebragg/bankroll#readme
+bug-reports:    https://github.com/natebragg/bankroll/issues
+author:         Nate Bragg
+maintainer:     nate@cs.tufts.edu
+copyright:      (c) 2020 Nate Bragg
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Custom
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/natebragg/bankroll
+
+custom-setup
+  setup-depends:
+      Cabal >=3.0
+    , base >=4.7 && <5
+    , filepath
+
+library
+  other-modules:
+      Paths_bankroll
+  reexported-modules:
+      Numeric.Optimization.Bankroll.LinearFunction
+    , Numeric.Optimization.Bankroll.Program
+    , Numeric.Optimization.Bankroll.Pretty
+    , Numeric.Optimization.Bankroll.Clp
+    , Numeric.Optimization.Bankroll.Cbc
+  build-depends:
+      bankroll-cbc
+    , bankroll-clp
+    , base >=4.7 && <5
+  default-language: Haskell2010
+
+library bankroll-cbc
+  exposed-modules:
+      Numeric.Optimization.Bankroll.Cbc
+  other-modules:
+      Bindings.Cbc.Cbc
+      Bindings.Cbc.Managed
+  reexported-modules:
+      Numeric.Optimization.Bankroll.LinearFunction
+    , Numeric.Optimization.Bankroll.Program
+    , Numeric.Optimization.Bankroll.Pretty
+  hs-source-dirs:
+      src/cbc
+  extra-libraries:
+      CbcSolver
+  build-depends:
+      bankroll-common
+    , base >=4.7 && <5
+  default-language: Haskell2010
+  visibility: public
+
+library bankroll-clp
+  exposed-modules:
+      Numeric.Optimization.Bankroll.Clp
+  other-modules:
+      Bindings.Clp.Clp
+      Bindings.Clp.Managed
+  reexported-modules:
+      Numeric.Optimization.Bankroll.LinearFunction
+    , Numeric.Optimization.Bankroll.Program
+    , Numeric.Optimization.Bankroll.Pretty
+  hs-source-dirs:
+      src/clp
+  extra-libraries:
+      Clp
+  build-depends:
+      bankroll-common
+    , base >=4.7 && <5
+  default-language: Haskell2010
+  visibility: public
+
+library bankroll-common
+  exposed-modules:
+      Numeric.Optimization.Bankroll.LinearFunction
+      Numeric.Optimization.Bankroll.Program
+      Numeric.Optimization.Bankroll.Pretty
+      Numeric.Optimization.Bankroll.Solver
+      Numeric.Optimization.Bankroll.Solver.Foreign
+  other-modules:
+      Numeric.Algebra.Double
+  hs-source-dirs:
+      src/common
+  build-depends:
+      algebra
+    , base >=4.7 && <5
+    , mtl
+    , pretty
+  default-language: Haskell2010
+
+executable bankroll
+  main-is: Main.hs
+  other-modules:
+      Paths_bankroll
+      PackageInfo
+  autogen-modules:
+      PackageInfo
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      bankroll
+    , base >=4.7 && <5
+  default-language: Haskell2010
+
+executable lemonade
+  main-is: lemonade.hs
+  other-modules:
+      Paths_bankroll
+  hs-source-dirs:
+      examples/lemonade
+  build-depends:
+      bankroll-clp
+    , base >=4.7 && <5
+  default-language: Haskell2010
+
+test-suite bankroll-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_bankroll
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      bankroll
+    , base >=4.7 && <5
+  default-language: Haskell2010
