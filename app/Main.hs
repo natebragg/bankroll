@@ -10,8 +10,8 @@ import System.Exit (exitSuccess, exitFailure, exitWith, ExitCode(ExitFailure))
 import Text.Printf (printf)
 import Text.Read (readEither)
 
-import qualified Numeric.Optimization.Clp.Clp as Bankroll
-import qualified Numeric.Optimization.Cbc.Cbc as Bankroll
+import qualified Numeric.Optimization.Bankroll.Clp as Bankroll
+import qualified Numeric.Optimization.Bankroll.Cbc as Bankroll
 import Numeric.Optimization.Bankroll.LinearFunction (coefficients)
 import PackageInfo (version, appName, synopsis)
 

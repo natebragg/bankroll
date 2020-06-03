@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Numeric.Optimization.Clp.Clp (
+module Numeric.Optimization.Bankroll.Clp (
     SimplexSolver,
 
     version,

@@ -2,7 +2,7 @@ module Main where
 
 import Control.Monad (forM, when)
 import Control.Monad.IO.Class (liftIO)
-import qualified Numeric.Optimization.Clp.Clp as Clp
+import qualified Numeric.Optimization.Bankroll.Clp as Clp
 import Numeric.Optimization.Bankroll.LinearFunction (dense, coefficients)
 import Numeric.Optimization.Bankroll.Program (Solution, GeneralForm(..), (<=$), solve)
 import Numeric.Optimization.Bankroll.Pretty (renderEqn)

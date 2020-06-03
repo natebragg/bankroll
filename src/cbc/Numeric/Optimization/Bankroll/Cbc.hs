@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Numeric.Optimization.Cbc.Cbc (
+module Numeric.Optimization.Bankroll.Cbc (
     BranchCutSolver,
 
     getVersion,

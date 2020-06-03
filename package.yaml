@@ -35,8 +35,8 @@ library:
   - Numeric.Optimization.Bankroll.LinearFunction
   - Numeric.Optimization.Bankroll.Program
   - Numeric.Optimization.Bankroll.Pretty
-  - Numeric.Optimization.Clp.Clp
-  - Numeric.Optimization.Cbc.Cbc
+  - Numeric.Optimization.Bankroll.Clp
+  - Numeric.Optimization.Bankroll.Cbc
   dependencies:
   - bankroll-clp
   - bankroll-cbc
@@ -51,7 +51,7 @@ internal-libraries:
     - Numeric.Optimization.Bankroll.Program
     - Numeric.Optimization.Bankroll.Pretty
     exposed-modules:
-    - Numeric.Optimization.Clp.Clp
+    - Numeric.Optimization.Bankroll.Clp
     other-modules:
     - Bindings.Clp.Clp
     - Bindings.Clp.Managed
@@ -68,7 +68,7 @@ internal-libraries:
     - Numeric.Optimization.Bankroll.Program
     - Numeric.Optimization.Bankroll.Pretty
     exposed-modules:
-    - Numeric.Optimization.Cbc.Cbc
+    - Numeric.Optimization.Bankroll.Cbc
     other-modules:
     - Bindings.Cbc.Cbc
     - Bindings.Cbc.Managed
