@@ -16,6 +16,7 @@ module Bindings.Cbc.Managed (
     getColLower,
     getColUpper,
     getNumElements,
+    getVectorStarts,
     getIndices,
     getElements,
     getObjValue,
@@ -88,6 +89,10 @@ getColUpper model = withForeignPtr (runModel model) $ \model ->
 getNumElements :: ModelHandle -> IO CInt
 getNumElements model = withForeignPtr (runModel model) $ \model ->
     Unmanaged.getNumElements model
+
+getVectorStarts :: ModelHandle -> IO (Ptr CInt)
+getVectorStarts model = withForeignPtr (runModel model) $ \model ->
+    Unmanaged.getVectorStarts model
 
 getIndices :: ModelHandle -> IO (Ptr CInt)
 getIndices model = withForeignPtr (runModel model) $ \model ->

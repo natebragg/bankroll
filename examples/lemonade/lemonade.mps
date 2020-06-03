@@ -18,6 +18,6 @@ RHS
     RHS       SUGAR     250.           WATER     240.
     RHS       VODKA     50.
 BOUNDS
- LO BND       REGULAR   0.
- LO BND       SPECIAL   0.
+ LI BND       REGULAR   0.
+ LI BND       SPECIAL   0.
 ENDATA

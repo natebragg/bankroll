@@ -20,6 +20,7 @@ module Bindings.Cbc.Cbc (
     getColLower,
     getColUpper,
     getNumElements,
+    getVectorStarts,
     getIndices,
     getElements,
     getObjValue,
@@ -61,6 +62,7 @@ foreign import ccall unsafe "Cbc_getObjCoefficients"            getObjCoefficien
 foreign import ccall unsafe "Cbc_getColLower"                   getColLower                   :: ModelHandle -> IO (Ptr CDouble)
 foreign import ccall unsafe "Cbc_getColUpper"                   getColUpper                   :: ModelHandle -> IO (Ptr CDouble)
 foreign import ccall unsafe "Cbc_getNumElements"                getNumElements                :: ModelHandle -> IO CInt
+foreign import ccall unsafe "Cbc_getVectorStarts"               getVectorStarts               :: ModelHandle -> IO (Ptr CInt)
 foreign import ccall unsafe "Cbc_getIndices"                    getIndices                    :: ModelHandle -> IO (Ptr CInt)
 foreign import ccall unsafe "Cbc_getElements"                   getElements                   :: ModelHandle -> IO (Ptr CDouble)
 foreign import ccall unsafe "Cbc_getObjValue"                   getObjValue                   :: ModelHandle -> IO CDouble
