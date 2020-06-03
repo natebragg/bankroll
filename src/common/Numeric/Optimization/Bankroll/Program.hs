@@ -60,8 +60,9 @@ instance LinearProgram GeneralForm where
         Solver.setObjSense direction
         Solver.loadProblem elements collb colub objective rowlb rowub
         status <- Solver.solve
-        case status of
-            Solver.Optimal -> (,) <$> Solver.getColSolution <*> Solver.getObjValue
+        optimal <- Solver.isProvenOptimal
+        case (status, optimal) of
+            (Solver.Finished, True) -> (,) <$> Solver.getColSolution <*> Solver.getObjValue
             _ -> return (zero, 0.0)
 
 data StandardConstraint = Lteq LinearFunction Double

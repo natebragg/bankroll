@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Numeric.Optimization.Bankroll.Cbc (
     BranchCutSolver,
@@ -69,4 +70,10 @@ instance Foreign.MonadSolver BranchCutSolver where
     getRowActivity     = withModel Cbc.getRowActivity
     getColSolution     = withModel Cbc.getColSolution
 
-instance MonadSolver BranchCutSolver
+instance MonadSolver BranchCutSolver where
+    solve = Foreign.initialSolve >>= \case
+                0 -> return Finished
+                1 -> return Stopped
+                2 -> return Errors
+                5 -> return UserStopped
+                _ -> return Unknown

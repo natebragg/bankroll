@@ -112,7 +112,7 @@ main = Clp.doSolverIO $ do
     Clp.setObjSense Clp.Maximize
 
     status <- Clp.solve
-    when (status /= Clp.Optimal) $
+    when (status /= Clp.Finished) $
         liftIO $ exitWith $ ExitFailure $ fromEnum status
 
     ipo   <- Clp.isProvenOptimal

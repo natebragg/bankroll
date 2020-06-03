@@ -37,15 +37,11 @@ import System.IO.Unsafe (unsafePerformIO)
 data OptimizationDirection = Maximize | Ignore | Minimize
     deriving (Eq, Ord, Enum, Show)
 
-data Status = Event3
-            | Event2
-            | Unknown
-            | Optimal
-            | PrimalInfeasible
-            | DualInfeasible
+data Status = Finished
             | Stopped
             | Errors
             | UserStopped
+            | Unknown
     deriving (Eq, Ord, Enum, Show)
 
 newtype Solver s a = Solver { unSolver :: StateT s IO a }
@@ -136,7 +132,6 @@ class (MonadIO m, Foreign.MonadSolver m) => MonadSolver m where
     getObjValue = realToFrac <$> Foreign.getObjValue
 
     solve :: m Status
-    solve = fmap (toEnum . (3 +) . fromIntegral) $ Foreign.initialSolve
 
     getNumRows :: m Int
     getNumRows = fromIntegral <$> Foreign.getNumRows

@@ -73,7 +73,7 @@ solveMps fn = do
     Bankroll.setObjSense Bankroll.Maximize
 
     status <- Bankroll.solve
-    liftIO $ when (status /= Bankroll.Optimal) $ do
+    liftIO $ when (status /= Bankroll.Finished) $ do
         putStrLn "Solver did not finish"
         exitWith $ ExitFailure $ fromEnum status
 

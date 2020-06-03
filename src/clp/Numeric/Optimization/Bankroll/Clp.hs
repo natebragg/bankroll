@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Numeric.Optimization.Bankroll.Clp (
     SimplexSolver,
@@ -134,4 +135,12 @@ instance Foreign.MonadSolver SimplexSolver where
     getRowActivity     = withModel Clp.getRowActivity
     getColSolution     = withModel Clp.getColSolution
 
-instance MonadSolver SimplexSolver
+instance MonadSolver SimplexSolver where
+    solve = Foreign.initialSolve >>= \case
+                0 -> return Finished
+                1 -> return Finished
+                2 -> return Finished
+                3 -> return Stopped
+                4 -> return Errors
+                5 -> return UserStopped
+                _ -> return Unknown
