@@ -1,5 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
@@ -62,26 +63,14 @@ instance Additive a => Additive (LinFunc i a) where
                     EQ -> (i, a + a'):merge ias ia's
                     GT -> ia':merge f ia's
 
-instance Semiring r => RightModule r (LinFunc i r) where
-    (LinFunc f) *. n = sparse $ fmap (fmap (* n)) f
+instance RightModule r' r => RightModule r' (LinFunc i r) where
+    (LinFunc f) *. n = sparse $ fmap (fmap (*. n)) f
 
-instance Semiring r => LeftModule r (LinFunc i r) where
-    (.*) = flip (*.)
-
-instance Additive r => RightModule Natural (LinFunc i r) where
-    m *. n = m *. fromIntegral n
-
-instance Additive r => LeftModule Natural (LinFunc i r) where
-    (.*) = (.*) . fromIntegral
+instance LeftModule r' r => LeftModule r' (LinFunc i r) where
+    n .* (LinFunc f) = sparse $ fmap (fmap (n .*)) f
 
 instance (Ord i, Enum i, Eq a, Monoidal a, Additive a) => Monoidal (LinFunc i a) where
     zero = LinFunc []
-
-instance Additive r => RightModule Integer (LinFunc i r) where
-    m *. n = m *. fromIntegral n
-
-instance Additive r => LeftModule Integer (LinFunc i r) where
-    (.*) = (.*) . fromIntegral
 
 instance (Ord i, Enum i, Eq a, Monoidal a, Group a) => Group (LinFunc i a) where
     negate (LinFunc f) = LinFunc $ fmap (fmap negate) f
