@@ -8,6 +8,8 @@ module Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunction,
     dense,
     sparse,
+    fill,
+    components,
     coefficients,
     coefficientOffsets,
     transpose,
