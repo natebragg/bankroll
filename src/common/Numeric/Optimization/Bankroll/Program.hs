@@ -1,5 +1,5 @@
 module Numeric.Optimization.Bankroll.Program (
-    LinearProgram(..),
+    LinearProgram(..), run,
     Solution,
     Objective,
     LinearFunction,
@@ -12,6 +12,7 @@ module Numeric.Optimization.Bankroll.Program (
 import qualified Numeric.Optimization.Bankroll.Solver as Solver
 import Numeric.Optimization.Bankroll.LinearFunction (LinearFunction, dense)
 
+import Control.Monad ((>=>))
 import Control.Arrow ((***))
 import Data.Foldable (toList)
 import Numeric.Algebra (zero)
@@ -22,6 +23,9 @@ type Solution = LinearFunction
 
 class LinearProgram a where
     solve :: Solver.MonadSolver m => a -> m (Solution, Double)
+    solve = load >=> const run
+
+    load  :: Solver.MonadSolver m => a -> m ()
 
 type Objective = LinearFunction
 
@@ -52,13 +56,16 @@ data GeneralForm = GeneralForm Solver.OptimizationDirection Objective [GeneralCo
     deriving Show
 
 instance LinearProgram GeneralForm where
-    solve (GeneralForm direction objective constraints) = do
+    load (GeneralForm direction objective constraints) = do
         let elements = map lf constraints
             numcols = maximum $ length objective:map length elements
             (collb, colub) = (zero, dense $ replicate numcols inf)
             (rowlb, rowub) = dense *** dense $ unzip $ map bound constraints
         Solver.setObjSense direction
         Solver.loadProblem elements collb colub objective rowlb rowub
+
+run   :: Solver.MonadSolver m => m (Solution, Double)
+run = do
         status <- Solver.solve
         optimal <- Solver.isProvenOptimal
         case (status, optimal) of
@@ -75,5 +82,5 @@ data StandardForm = StandardForm Objective [StandardConstraint]
     deriving Show
 
 instance LinearProgram StandardForm where
-    solve (StandardForm objective constraints) =
-        solve $ GeneralForm Solver.Maximize objective $ map generalize constraints
+    load (StandardForm objective constraints) =
+        load $ GeneralForm Solver.Maximize objective $ map generalize constraints
