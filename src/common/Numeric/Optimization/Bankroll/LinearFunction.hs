@@ -81,6 +81,12 @@ dense = sparse . zip (enumFrom $ toEnum 0)
 sparse :: (Ord i, Enum i, Eq a, Monoidal a) => [(i, a)] -> LinFunc i a
 sparse = LinFunc . filter ((/= zero) . snd)
 
+fill :: (Ord i, Enum i, Eq a, Monoidal a) => [i] -> a -> LinFunc i a
+fill is = LinFunc . zip is . repeat
+
+components :: (Ord i, Enum i, Eq a, Monoidal a) => LinFunc i a -> [LinFunc i a]
+components (LinFunc cs) = map (LinFunc . pure) cs
+
 coefficients :: LinFunc i a -> ([i], [a])
 coefficients (LinFunc cs) = unzip cs
 
