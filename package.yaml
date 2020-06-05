@@ -2,7 +2,7 @@ verbatim:
   cabal-version: 3.0
 
 name:                bankroll
-version:             1.1.1.0
+version:             1.1.2.0
 github:              "natebragg/bankroll"
 license:             BSD-3-Clause
 author:              "Nate Bragg"
