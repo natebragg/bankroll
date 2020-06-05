@@ -15,6 +15,9 @@ module Bindings.Cbc.Managed (
     getObjCoefficients,
     getColLower,
     getColUpper,
+    isInteger,
+    setContinuous,
+    setInteger,
     getNumElements,
     getVectorStarts,
     getIndices,
@@ -85,6 +88,18 @@ getColLower model = withForeignPtr (runModel model) $ \model ->
 getColUpper :: ModelHandle -> IO (Ptr CDouble)
 getColUpper model = withForeignPtr (runModel model) $ \model ->
     Unmanaged.getColUpper model
+
+isInteger :: ModelHandle -> CInt -> IO CInt
+isInteger model col = withForeignPtr (runModel model) $ \model ->
+    Unmanaged.isInteger model col
+
+setContinuous :: ModelHandle -> CInt -> IO ()
+setContinuous model col = withForeignPtr (runModel model) $ \model ->
+    Unmanaged.setContinuous model col
+
+setInteger :: ModelHandle -> CInt -> IO ()
+setInteger model col = withForeignPtr (runModel model) $ \model ->
+    Unmanaged.setInteger model col
 
 getNumElements :: ModelHandle -> IO CInt
 getNumElements model = withForeignPtr (runModel model) $ \model ->

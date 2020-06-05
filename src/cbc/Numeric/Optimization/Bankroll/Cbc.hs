@@ -7,6 +7,10 @@ module Numeric.Optimization.Bankroll.Cbc (
 
     getVersion,
 
+    isInteger,
+    setContinuous,
+    setInteger,
+
     isProvenInfeasible,
     isSolutionLimitReached,
 
@@ -31,6 +35,10 @@ withModel f = model >>= liftIO . f
 
 getVersion :: String
 getVersion = unsafePerformIO $ peekCString Cbc.getVersion
+
+isInteger c            = withModel $ \m -> Cbc.isInteger m c
+setContinuous c        = withModel $ \m -> Cbc.setContinuous m c
+setInteger c           = withModel $ \m -> Cbc.setInteger m c
 
 isProvenInfeasible     = withModel Cbc.isProvenInfeasible
 isSolutionLimitReached = withModel Cbc.isSolutionLimitReached
