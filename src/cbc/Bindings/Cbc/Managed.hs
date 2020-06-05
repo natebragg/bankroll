@@ -89,7 +89,7 @@ getColUpper :: ModelHandle -> IO (Ptr CDouble)
 getColUpper model = withForeignPtr (runModel model) $ \model ->
     Unmanaged.getColUpper model
 
-isInteger :: ModelHandle -> CInt -> IO CInt
+isInteger :: ModelHandle -> CInt -> IO Bool
 isInteger model col = withForeignPtr (runModel model) $ \model ->
     Unmanaged.isInteger model col
 

@@ -64,7 +64,7 @@ foreign import ccall unsafe "Cbc_getRowUpper"                   getRowUpper     
 foreign import ccall unsafe "Cbc_getObjCoefficients"            getObjCoefficients            :: ModelHandle -> IO (Ptr CDouble)
 foreign import ccall unsafe "Cbc_getColLower"                   getColLower                   :: ModelHandle -> IO (Ptr CDouble)
 foreign import ccall unsafe "Cbc_getColUpper"                   getColUpper                   :: ModelHandle -> IO (Ptr CDouble)
-foreign import ccall unsafe "Cbc_isInteger"                     isInteger                     :: ModelHandle -> CInt -> IO CInt
+foreign import ccall unsafe "Cbc_isInteger"                     isInteger                     :: ModelHandle -> CInt -> IO Bool
 foreign import ccall unsafe "Cbc_setContinuous"                 setContinuous                 :: ModelHandle -> CInt -> IO ()
 foreign import ccall unsafe "Cbc_setInteger"                    setInteger                    :: ModelHandle -> CInt -> IO ()
 foreign import ccall unsafe "Cbc_getNumElements"                getNumElements                :: ModelHandle -> IO CInt

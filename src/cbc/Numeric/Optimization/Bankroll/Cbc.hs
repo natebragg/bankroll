@@ -36,9 +36,9 @@ withModel f = model >>= liftIO . f
 getVersion :: String
 getVersion = unsafePerformIO $ peekCString Cbc.getVersion
 
-isInteger c            = withModel $ \m -> Cbc.isInteger m c
-setContinuous c        = withModel $ \m -> Cbc.setContinuous m c
-setInteger c           = withModel $ \m -> Cbc.setInteger m c
+isInteger c            = withModel $ \m -> Cbc.isInteger     m $ fromIntegral c
+setContinuous c        = withModel $ \m -> Cbc.setContinuous m $ fromIntegral c
+setInteger c           = withModel $ \m -> Cbc.setInteger    m $ fromIntegral c
 
 isProvenInfeasible     = withModel Cbc.isProvenInfeasible
 isSolutionLimitReached = withModel Cbc.isSolutionLimitReached
