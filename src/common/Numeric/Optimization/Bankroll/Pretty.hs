@@ -20,6 +20,8 @@ import Numeric.Optimization.Bankroll.LinearFunction (
 import Numeric.Optimization.Bankroll.Program (
     GeneralConstraint(Leq, Eql, Geq),
     GeneralForm(GeneralForm),
+    StandardForm,
+    generalize,
     )
 
 import Control.Arrow (first, (&&&))
@@ -187,6 +189,10 @@ instance PrettyGrid GeneralForm where
             where g' = Grid 1 c w
                   cs' = take (r - 1) $ cs ++ replicate (r - 1 - length cs) (sparse [] `Eql` 0.0)
 
+instance PrettyGrid StandardForm where
+    size = size . generalize
+    prettyGrid = (. generalize) . prettyGrid
+
 -- Equation Pretty Printer
 
 class PrettyEqn a where
@@ -227,3 +233,6 @@ instance PrettyEqn GeneralConstraint where
 instance PrettyEqn GeneralForm where
     prettyEqn xs (GeneralForm a o cs) =
         text (map toLower $ show a) <+> prettyEqn xs o $+$ vcat (map (prettyEqn xs) cs)
+
+instance PrettyEqn StandardForm where
+    prettyEqn = (. generalize) . prettyEqn

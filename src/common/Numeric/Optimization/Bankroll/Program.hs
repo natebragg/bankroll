@@ -3,10 +3,12 @@ module Numeric.Optimization.Bankroll.Program (
     Solution,
     Objective,
     LinearFunction,
+    Solver.OptimizationDirection(..),
     GeneralConstraint(..), (<=$), (==$), (>=$),
     GeneralForm(..),
     StandardConstraint(..),
     StandardForm(..),
+    generalize,
 ) where
 
 import qualified Numeric.Optimization.Bankroll.Solver as Solver
@@ -75,12 +77,12 @@ run = do
 data StandardConstraint = Lteq LinearFunction Double
     deriving Show
 
-generalize :: StandardConstraint -> GeneralConstraint
-generalize (Lteq f b) = Leq f b
-
 data StandardForm = StandardForm Objective [StandardConstraint]
     deriving Show
 
+generalize :: StandardForm -> GeneralForm
+generalize (StandardForm objective constraints) =
+    GeneralForm Solver.Maximize objective $ map (\(Lteq f b) -> Leq f b) constraints
+
 instance LinearProgram StandardForm where
-    load (StandardForm objective constraints) =
-        load $ GeneralForm Solver.Maximize objective $ map generalize constraints
+    load = load . generalize
