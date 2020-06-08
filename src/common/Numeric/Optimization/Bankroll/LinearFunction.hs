@@ -42,7 +42,7 @@ deriving instance (Ord i, Ord a) => Ord (LinFunc i a)
 deriving instance (Eq i, Eq a) => Eq (LinFunc i a)
 
 instance Foldable (LinFunc i) where
-    foldMap f (LinFunc cs) = go (toEnum 0) $ sortOn fst cs
+    foldMap f (LinFunc cs) = go (toEnum 0) cs
         where go _ [] = mempty
               go i cs = f (sum $ map snd eqc) `mappend` go (succ i) gtc
                     where (eqc, gtc) = span ((i ==) . fst) cs
@@ -55,7 +55,7 @@ instance Foldable (LinFunc i) where
     elem a (LinFunc cs) = any ((a ==) . snd) cs
 
 instance Additive a => Additive (LinFunc i a) where
-    (LinFunc f) + (LinFunc f') = sparse $ merge (sortOn fst f) (sortOn fst f')
+    (LinFunc f) + (LinFunc f') = sparse $ merge f f'
         where merge  f [] = f
               merge [] f' = f'
               merge f@(ia@(i, a):ias) f'@(ia'@(i', a'):ia's) =
@@ -76,14 +76,19 @@ instance (Ord i, Enum i, Eq a, Monoidal a, Additive a) => Monoidal (LinFunc i a)
 instance (Ord i, Enum i, Eq a, Monoidal a, Group a) => Group (LinFunc i a) where
     negate (LinFunc f) = LinFunc $ fmap (fmap negate) f
 
+groupindex :: Ord i => [(i, a)] -> [(i, [a])]
+groupindex = map ((\(a:_, bs) -> (a, bs)) . unzip) .
+             groupBy ((==) `on` fst) . sortOn fst
+
 dense :: (Ord i, Enum i, Eq a, Monoidal a) => [a] -> LinFunc i a
 dense = sparse . zip (enumFrom $ toEnum 0)
 
 sparse :: (Ord i, Enum i, Eq a, Monoidal a) => [(i, a)] -> LinFunc i a
-sparse = LinFunc . filter ((/= zero) . snd)
+sparse = LinFunc . normalize
+    where normalize = filter ((/= zero) . snd) . map (fmap sum) . groupindex
 
 fill :: (Ord i, Enum i, Eq a, Monoidal a) => [i] -> a -> LinFunc i a
-fill is = LinFunc . zip is . repeat
+fill is = sparse . zip is . repeat
 
 components :: (Ord i, Enum i, Eq a, Monoidal a) => LinFunc i a -> [LinFunc i a]
 components (LinFunc cs) = map (LinFunc . pure) cs
@@ -99,8 +104,6 @@ coefficientOffsets fs = (offs, concat is, concat as)
 transpose :: (Ord i, Enum i, Eq a, Monoidal a) => [LinFunc i a] -> [LinFunc i a]
 transpose fs = normalize $ groupindex $ concat $ zipWith reindex (enumFrom $ toEnum 0) fs
     where reindex j (LinFunc cs) = map (fmap $ (,) j) cs
-          groupindex = map ((\(a:_, bs) -> (a, bs)) . unzip) .
-                       groupBy ((==) `on` fst) . sortOn fst
           normalize = go (toEnum 0)
             where go _ [] = []
                   go j fs@((i, _):_ ) | j < i = zero    :go (succ j) fs
