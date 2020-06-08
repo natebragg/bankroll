@@ -4,6 +4,7 @@
 
 module Numeric.Optimization.Bankroll.Clp (
     SimplexSolver,
+    Clp.SimplexHandle,
 
     version,
     versionMajor,
@@ -25,8 +26,13 @@ module Numeric.Optimization.Bankroll.Clp (
     isDualObjectiveLimitReached,
     isIterationLimitReached,
 
+    evalClpSolverIO,
+    evalClpSolver,
+    doClpSolverIO,
+    doClpSolver,
+
     module Solver,
-    Solver.Solver(..)
+    Solver.Solver(..),
 ) where
 
 import qualified Bindings.Clp.Managed as Clp
@@ -45,6 +51,13 @@ import Numeric.Optimization.Bankroll.Solver as Solver
 import qualified Numeric.Optimization.Bankroll.Solver.Foreign as Foreign
 
 type SimplexSolver = Solver Clp.SimplexHandle
+
+evalClpSolverIO :: SimplexSolver a -> Clp.SimplexHandle -> IO a
+evalClpSolver :: SimplexSolver a -> Clp.SimplexHandle -> a
+doClpSolverIO :: SimplexSolver a -> IO a
+doClpSolver :: SimplexSolver a -> a
+(evalClpSolverIO, evalClpSolver, doClpSolverIO, doClpSolver) =
+    (Solver.evalSolverIO, Solver.evalSolver, Solver.doSolverIO, Solver.doSolver)
 
 withModel f = model >>= liftIO . f
 

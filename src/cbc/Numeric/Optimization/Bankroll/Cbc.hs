@@ -4,6 +4,7 @@
 
 module Numeric.Optimization.Bankroll.Cbc (
     BranchCutSolver,
+    Cbc.ModelHandle,
 
     getVersion,
 
@@ -14,8 +15,13 @@ module Numeric.Optimization.Bankroll.Cbc (
     isProvenInfeasible,
     isSolutionLimitReached,
 
+    evalCbcSolverIO,
+    evalCbcSolver,
+    doCbcSolverIO,
+    doCbcSolver,
+
     module Solver,
-    Solver.Solver(..)
+    Solver.Solver(..),
 ) where
 
 import qualified Bindings.Cbc.Managed as Cbc
@@ -30,6 +36,13 @@ import Numeric.Optimization.Bankroll.Solver as Solver
 import qualified Numeric.Optimization.Bankroll.Solver.Foreign as Foreign
 
 type BranchCutSolver = Solver Cbc.ModelHandle
+
+evalCbcSolverIO :: BranchCutSolver a -> Cbc.ModelHandle -> IO a
+evalCbcSolver :: BranchCutSolver a -> Cbc.ModelHandle -> a
+doCbcSolverIO :: BranchCutSolver a -> IO a
+doCbcSolver :: BranchCutSolver a -> a
+(evalCbcSolverIO, evalCbcSolver, doCbcSolverIO, doCbcSolver) =
+    (Solver.evalSolverIO, Solver.evalSolver, Solver.doSolverIO, Solver.doSolver)
 
 withModel f = model >>= liftIO . f
 
