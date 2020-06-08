@@ -10,6 +10,7 @@ module Numeric.Optimization.Bankroll.Pretty (
     varnames,
     renderEqn,
     renderEqnDefault,
+    prettyShow,
 ) where
 
 import Numeric.Optimization.Bankroll.LinearFunction (
@@ -20,7 +21,8 @@ import Numeric.Optimization.Bankroll.LinearFunction (
 import Numeric.Optimization.Bankroll.Program (
     GeneralConstraint(Leq, Eql, Geq),
     GeneralForm(GeneralForm),
-    StandardForm,
+    StandardConstraint(Lteq),
+    StandardForm(StandardForm),
     generalize,
     )
 
@@ -39,7 +41,12 @@ import Text.PrettyPrint (
     punctuate,
     (<+>),
     ($+$),
+    parens,
     isEmpty,
+    )
+import Text.PrettyPrint.HughesPJClass (
+    Pretty(..),
+    prettyShow,
     )
 import Text.Printf (printf)
 
@@ -236,3 +243,21 @@ instance PrettyEqn GeneralForm where
 
 instance PrettyEqn StandardForm where
     prettyEqn = (. generalize) . prettyEqn
+
+instance Pretty LinearFunction where
+    pPrint f = text "sparse" <+> pPrint (uncurry zip $ coefficients f)
+
+instance Pretty GeneralConstraint where
+    pPrint gc = pPrint (fOfGC gc) <+> text (opOfGC gc) <+> pPrint (dOfGC gc)
+        where opOfGC (Leq _ _) = "<=$"
+              opOfGC (Eql _ _) = "==$"
+              opOfGC (Geq _ _) = ">=$"
+
+instance Pretty GeneralForm where
+    pPrint (GeneralForm a o cs) = text "GeneralForm" <+> text (show a) <+> parens (pPrint o) $+$ pPrint cs
+
+instance Pretty StandardConstraint where
+    pPrint (Lteq f d) = pPrint f <+> text "`Lteq`" <+> pPrint d
+
+instance Pretty StandardForm where
+    pPrint (StandardForm o cs) = text "StandardForm" <+> parens (pPrint o) $+$ pPrint cs
