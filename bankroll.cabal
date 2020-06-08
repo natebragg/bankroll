@@ -4,10 +4,10 @@ cabal-version: 3.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bd6498facfacdf285b19122fb482614a796ee0fcbb91ca714287239fbffdf2eb
+-- hash: c9d006dab03a205c2be5769644c8845aaeb179b62a88367a56954bc9959fe530
 
 name:           bankroll
-version:        1.1.2.0
+version:        1.2.0.0
 synopsis:       Wrapper for COIN-OR CLP and CBC
 description:    Please see the README on GitHub at <https://github.com/natebragg/bankroll#readme>
 category:       Numeric, Optimisation, Optimization
