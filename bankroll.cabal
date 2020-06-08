@@ -4,7 +4,7 @@ cabal-version: 3.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 523b3d2804a588c8a977a8161df8e6a7319dd89a3245563cfd674faa0c515ee8
+-- hash: bd6498facfacdf285b19122fb482614a796ee0fcbb91ca714287239fbffdf2eb
 
 name:           bankroll
 version:        1.1.2.0
@@ -140,6 +140,8 @@ test-suite bankroll-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      bankroll
+      QuickCheck
+    , bankroll
     , base >=4.7 && <5
+    , pretty
   default-language: Haskell2010

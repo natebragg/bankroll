@@ -119,3 +119,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - bankroll
+    - QuickCheck
+    - pretty
