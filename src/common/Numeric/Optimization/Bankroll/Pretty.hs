@@ -15,6 +15,7 @@ module Numeric.Optimization.Bankroll.Pretty (
 
 import Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunction,
+    coordinates,
     coefficients,
     sparse,
     )
@@ -80,7 +81,7 @@ lfmap g (Geq f n) = Geq (g f) n
 normalize :: GeneralForm -> GeneralForm
 normalize (GeneralForm a o cs) = GeneralForm a (renumber o) (map (lfmap renumber) cs)
     where off = minimum $ map (minimum . fst . coefficients) $ o : map fOfGC cs
-          renumber = sparse . uncurry zip . first (map $ subtract off) . coefficients
+          renumber = sparse . map (first $ subtract off) . coordinates
 
 -- Double Helpers
 
@@ -245,7 +246,7 @@ instance PrettyEqn StandardForm where
     prettyEqn = (. generalize) . prettyEqn
 
 instance Pretty LinearFunction where
-    pPrint f = text "sparse" <+> pPrint (uncurry zip $ coefficients f)
+    pPrint f = text "sparse" <+> pPrint (coordinates f)
 
 instance Pretty GeneralConstraint where
     pPrint gc = pPrint (fOfGC gc) <+> text (opOfGC gc) <+> pPrint (dOfGC gc)

@@ -8,6 +8,7 @@ module Numeric.Optimization.Bankroll.LinearFunction (
     dense,
     sparse,
     fill,
+    coordinates,
     components,
     coefficients,
     coefficientOffsets,
@@ -35,26 +36,27 @@ type LinearFunction = LinFunc Int Double
 -- For efficiency, it's a critical invariant that LinFuncs are normalized.
 -- Never construct with LinFunc, only sparse and dense.
 data LinFunc i a where
-    LinFunc :: (Ord i, Enum i, Eq a, Monoidal a) => [(i, a)] -> LinFunc i a
+    LinFunc :: (Ord i, Monoidal a) => {
+        coordinates :: [(i, a)]
+    } -> LinFunc i a
 
 deriving instance (Show i, Show a) => Show (LinFunc i a)
-deriving instance (Ord i, Ord a) => Ord (LinFunc i a)
 deriving instance (Eq i, Eq a) => Eq (LinFunc i a)
 
-instance Foldable (LinFunc i) where
+instance Enum i => Foldable (LinFunc i) where
     foldMap f (LinFunc cs) = go (toEnum 0) cs
         where go _ [] = mempty
               go i cs = f (sum $ map snd eqc) `mappend` go (succ i) gtc
                     where (eqc, gtc) = span ((i ==) . fst) cs
 
-    null (LinFunc cs) = null cs
+    null = null . coordinates
 
     length (LinFunc []) = 0
     length (LinFunc cs) = 1 + fromEnum (maximum (map fst cs))
 
-    elem a (LinFunc cs) = any ((a ==) . snd) cs
+    elem a = any ((a ==) . snd) . coordinates
 
-instance Additive a => Additive (LinFunc i a) where
+instance (Eq a, Additive a) => Additive (LinFunc i a) where
     (LinFunc f) + (LinFunc f') = sparse $ merge f f'
         where merge  f [] = f
               merge [] f' = f'
@@ -64,17 +66,17 @@ instance Additive a => Additive (LinFunc i a) where
                     EQ -> (i, a + a'):merge ias ia's
                     GT -> ia':merge f ia's
 
-instance RightModule r' r => RightModule r' (LinFunc i r) where
+instance (Eq a, RightModule a' a) => RightModule a' (LinFunc i a) where
     (LinFunc f) *. n = sparse $ fmap (fmap (*. n)) f
 
-instance LeftModule r' r => LeftModule r' (LinFunc i r) where
+instance (Eq a, LeftModule a' a) => LeftModule a' (LinFunc i a) where
     n .* (LinFunc f) = sparse $ fmap (fmap (n .*)) f
 
-instance (Ord i, Enum i, Eq a, Monoidal a, Additive a) => Monoidal (LinFunc i a) where
+instance (Ord i, Eq a, Monoidal a) => Monoidal (LinFunc i a) where
     zero = LinFunc []
 
-instance (Ord i, Enum i, Eq a, Monoidal a, Group a) => Group (LinFunc i a) where
-    negate (LinFunc f) = LinFunc $ fmap (fmap negate) f
+instance (Ord i, Eq a, Group a) => Group (LinFunc i a) where
+    negate = sparse . fmap (fmap negate) . coordinates
 
 groupindex :: Ord i => [(i, a)] -> [(i, [a])]
 groupindex = map ((\(a:_, bs) -> (a, bs)) . unzip) .
@@ -83,18 +85,19 @@ groupindex = map ((\(a:_, bs) -> (a, bs)) . unzip) .
 dense :: (Ord i, Enum i, Eq a, Monoidal a) => [a] -> LinFunc i a
 dense = sparse . zip (enumFrom $ toEnum 0)
 
-sparse :: (Ord i, Enum i, Eq a, Monoidal a) => [(i, a)] -> LinFunc i a
+-- normalization invariants: indices sorted/unique, no zero components.
+sparse :: (Ord i, Eq a, Monoidal a) => [(i, a)] -> LinFunc i a
 sparse = LinFunc . normalize
     where normalize = filter ((/= zero) . snd) . map (fmap sum) . groupindex
 
-fill :: (Ord i, Enum i, Eq a, Monoidal a) => [i] -> a -> LinFunc i a
+fill :: (Ord i, Eq a, Monoidal a) => [i] -> a -> LinFunc i a
 fill is = sparse . zip is . repeat
 
-components :: (Ord i, Enum i, Eq a, Monoidal a) => LinFunc i a -> [LinFunc i a]
-components (LinFunc cs) = map (LinFunc . pure) cs
+components :: (Ord i, Eq a, Monoidal a) => LinFunc i a -> [LinFunc i a]
+components = map (LinFunc . pure) . coordinates
 
 coefficients :: LinFunc i a -> ([i], [a])
-coefficients (LinFunc cs) = unzip cs
+coefficients = unzip . coordinates
 
 coefficientOffsets :: [LinFunc i a] -> ([Int], [i], [a])
 coefficientOffsets fs = (offs, concat is, concat as)
@@ -103,7 +106,7 @@ coefficientOffsets fs = (offs, concat is, concat as)
 
 transpose :: (Ord i, Enum i, Eq a, Monoidal a) => [LinFunc i a] -> [LinFunc i a]
 transpose fs = normalize $ groupindex $ concat $ zipWith reindex (enumFrom $ toEnum 0) fs
-    where reindex j (LinFunc cs) = map (fmap $ (,) j) cs
+    where reindex j = map (fmap $ (,) j) . coordinates
           normalize = go (toEnum 0)
             where go _ [] = []
                   go j fs@((i, _):_ ) | j < i = zero    :go (succ j) fs

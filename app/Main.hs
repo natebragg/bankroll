@@ -12,7 +12,7 @@ import Text.Read (readEither)
 
 import qualified Numeric.Optimization.Bankroll.Clp as Bankroll
 import qualified Numeric.Optimization.Bankroll.Cbc as Bankroll
-import Numeric.Optimization.Bankroll.LinearFunction (coefficients)
+import Numeric.Optimization.Bankroll.LinearFunction (coordinates)
 import PackageInfo (version, appName, synopsis)
 
 data Flag = Version
@@ -83,15 +83,14 @@ solveMps fn = do
         exitWith $ ExitFailure $ fromEnum status
 
     pr <- Bankroll.getRowActivity
-    forM (enumerate pr) $ \(row, pr_row) ->
+    forM (coordinates pr) $ \(row, pr_row) ->
         liftIO $ printf "row %d, value %f\n" row pr_row
 
     pc <- Bankroll.getColSolution
-    forM (enumerate pc) $ \(col, pc_col) ->
+    forM (coordinates pc) $ \(col, pc_col) ->
         liftIO $ printf "col %d, solution %f\n" col pc_col
 
     return ()
-    where enumerate = uncurry zip . coefficients
 
 main :: IO ()
 main = do

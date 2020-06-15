@@ -10,7 +10,7 @@ import Numeric.Optimization.Bankroll.LinearFunction (
     LinearFunction,
     dense,
     sparse,
-    coefficients,
+    coordinates,
     )
 import Numeric.Optimization.Bankroll.Program (
     LinearProgram(..),
@@ -38,7 +38,7 @@ class Perturb a where
     perturb :: a -> Gen a
 
 instance Perturb LinearFunction where
-    perturb f = sparse <$> perturb (uncurry zip $ coefficients f)
+    perturb f = sparse <$> perturb (coordinates f)
 
 instance Perturb StandardConstraint where
     perturb (Lteq f d) = Lteq <$> perturb f <*> perturb d

@@ -3,7 +3,7 @@ module Main where
 import Control.Monad (forM, when)
 import Control.Monad.IO.Class (liftIO)
 import qualified Numeric.Optimization.Bankroll.Clp as Clp
-import Numeric.Optimization.Bankroll.LinearFunction (dense, coefficients)
+import Numeric.Optimization.Bankroll.LinearFunction (dense, coordinates)
 import Numeric.Optimization.Bankroll.Program (Solution, GeneralForm(..), (<=$), solve)
 import Numeric.Optimization.Bankroll.Pretty (renderEqn)
 import System.Exit (exitWith, ExitCode(ExitFailure))
@@ -126,11 +126,9 @@ main = Clp.doSolverIO $ do
        (show ipo) (show ippi) (show ipdi) (show ipolr) (show idolr) (show iilr) (show ia)
 
     pr <- Clp.getRowActivity
-    forM (enumerate pr) $ \(row, pr_row) ->
+    forM (coordinates pr) $ \(row, pr_row) ->
         liftIO $ printf "row %d, value %f\n" row pr_row
 
     pc <- Clp.getColSolution
-    forM (enumerate pc) $ \(col, pc_col) ->
+    forM (coordinates pc) $ \(col, pc_col) ->
         liftIO $ printf "col %d, solution %f\n" col pc_col
-
-    where enumerate = uncurry zip . coefficients
