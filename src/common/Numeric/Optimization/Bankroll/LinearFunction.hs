@@ -13,6 +13,10 @@ module Numeric.Optimization.Bankroll.LinearFunction (
     coefficients,
     coefficientOffsets,
     transpose,
+    hadamard,
+    dot,
+    norm,
+    within,
 ) where
 
 import Data.Function (on)
@@ -29,7 +33,7 @@ import Numeric.Algebra (
     RightModule(..),
     sum)
 import Numeric.Algebra.Double
-import Prelude hiding (sum, negate, (+), (*))
+import Prelude hiding (sum, negate, (+), (-), (*))
 
 type LinearFunction = LinFunc Int Double
 
@@ -57,13 +61,16 @@ instance Enum i => Foldable (LinFunc i) where
     elem a = any ((a ==) . snd) . coordinates
 
 instance (Eq a, Additive a) => Additive (LinFunc i a) where
-    (LinFunc f) + (LinFunc f') = sparse $ merge f f'
+    (+) = mergeWith (+)
+
+mergeWith :: Eq a => (a -> a -> a) -> LinFunc i a -> LinFunc i a -> LinFunc i a
+mergeWith g (LinFunc cs) (LinFunc cs') = sparse $ merge cs cs'
         where merge  f [] = f
               merge [] f' = f'
               merge f@(ia@(i, a):ias) f'@(ia'@(i', a'):ia's) =
                 case compare i i' of
                     LT -> ia:merge ias f'
-                    EQ -> (i, a + a'):merge ias ia's
+                    EQ -> (i, g a a'):merge ias ia's
                     GT -> ia':merge f ia's
 
 instance (Eq a, RightModule a' a) => RightModule a' (LinFunc i a) where
@@ -111,3 +118,15 @@ transpose fs = normalize $ groupindex $ concat $ zipWith reindex (enumFrom $ toE
             where go _ [] = []
                   go j fs@((i, _):_ ) | j < i = zero    :go (succ j) fs
                   go j    ((_, f):fs)         = sparse f:go (succ j) fs
+
+hadamard :: (Eq a, Multiplicative a) => LinFunc i a -> LinFunc i a -> LinFunc i a
+hadamard = mergeWith (*)
+
+dot :: (Eq a, Multiplicative a, Monoidal a) => LinFunc i a -> LinFunc i a -> a
+dot = ((sum . map snd . coordinates) .) . hadamard
+
+norm :: (Eq a, Multiplicative a, Monoidal a, Floating a) => LinFunc i a -> a
+norm f = sqrt $ dot f f
+
+within :: (Ord i, Ord a, Multiplicative a, Group a, Floating a) => a -> LinFunc i a -> LinFunc i a -> Bool
+within epsilon f g = epsilon > norm (f - g)
