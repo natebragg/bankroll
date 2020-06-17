@@ -16,6 +16,7 @@ module Numeric.Optimization.Bankroll.LinearFunction (
     hadamard,
     dot,
     norm,
+    manhattan,
     within,
 ) where
 
@@ -127,6 +128,9 @@ dot = ((sum . map snd . coordinates) .) . hadamard
 
 norm :: (Eq a, Multiplicative a, Monoidal a, Floating a) => LinFunc i a -> a
 norm f = sqrt $ dot f f
+
+manhattan :: (Monoidal a, Num a) => LinFunc i a -> a
+manhattan = sum . map abs . snd . coefficients
 
 within :: (Ord i, Ord a, Multiplicative a, Group a, Floating a) => a -> LinFunc i a -> LinFunc i a -> Bool
 within epsilon f g = epsilon > norm (f - g)
