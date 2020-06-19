@@ -66,13 +66,13 @@ instance (Eq a, Additive a) => Additive (LinFunc i a) where
 
 mergeWith :: Eq a => (a -> a -> a) -> LinFunc i a -> LinFunc i a -> LinFunc i a
 mergeWith g (LinFunc cs) (LinFunc cs') = sparse $ merge cs cs'
-        where merge  f [] = f
-              merge [] f' = f'
-              merge f@(ia@(i, a):ias) f'@(ia'@(i', a'):ia's) =
+        where merge  f [] = map (fmap $ flip g zero) f
+              merge [] f' = map (fmap $      g zero) f'
+              merge f@((i, a):ias) f'@((i', a'):ia's) =
                 case compare i i' of
-                    LT -> ia:merge ias f'
-                    EQ -> (i, g a a'):merge ias ia's
-                    GT -> ia':merge f ia's
+                    LT -> (i,  g a zero ):merge ias f'
+                    EQ -> (i,  g a    a'):merge ias ia's
+                    GT -> (i', g zero a'):merge f ia's
 
 instance (Eq a, RightModule a' a) => RightModule a' (LinFunc i a) where
     (LinFunc f) *. n = sparse $ fmap (fmap (*. n)) f
