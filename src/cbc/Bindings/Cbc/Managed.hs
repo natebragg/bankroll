@@ -24,6 +24,7 @@ module Bindings.Cbc.Managed (
     getElements,
     getObjValue,
 
+    setParameter,
     solve,
 
     getNumRows,
@@ -120,6 +121,10 @@ getElements model = withForeignPtr (runModel model) $ \model ->
 getObjValue :: ModelHandle -> IO CDouble
 getObjValue model = withForeignPtr (runModel model) $ \model ->
     Unmanaged.getObjValue model
+
+setParameter :: ModelHandle -> CString -> CString -> IO ()
+setParameter model name value = withForeignPtr (runModel model) $ \model ->
+    Unmanaged.setParameter model name value
 
 solve :: ModelHandle -> IO CInt
 solve model = withForeignPtr (runModel model) $ \model ->

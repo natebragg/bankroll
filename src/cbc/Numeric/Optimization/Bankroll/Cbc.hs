@@ -12,6 +12,8 @@ module Numeric.Optimization.Bankroll.Cbc (
     setContinuous,
     setInteger,
 
+    setParameter,
+
     isProvenInfeasible,
     isSolutionLimitReached,
 
@@ -28,7 +30,7 @@ import qualified Bindings.Cbc.Managed as Cbc
 
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Foreign.Ptr (Ptr)
-import Foreign.C.String (peekCString)
+import Foreign.C.String (peekCString, withCString)
 import Foreign.C.Types (CInt(..))
 import Foreign.Marshal.Array (peekArray, newArray)
 import System.IO.Unsafe (unsafePerformIO)
@@ -52,6 +54,8 @@ getVersion = unsafePerformIO $ peekCString Cbc.getVersion
 isInteger c            = withModel $ \m -> Cbc.isInteger     m $ fromIntegral c
 setContinuous c        = withModel $ \m -> Cbc.setContinuous m $ fromIntegral c
 setInteger c           = withModel $ \m -> Cbc.setInteger    m $ fromIntegral c
+
+setParameter n v       = withModel $ \m -> withCString n $ \n -> withCString v $ \v -> Cbc.setParameter m n v
 
 isProvenInfeasible     = withModel Cbc.isProvenInfeasible
 isSolutionLimitReached = withModel Cbc.isSolutionLimitReached

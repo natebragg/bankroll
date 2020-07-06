@@ -28,6 +28,7 @@ module Bindings.Cbc.Cbc (
     getElements,
     getObjValue,
 
+    setParameter,
     solve,
 
     getNumRows,
@@ -73,6 +74,7 @@ foreign import ccall unsafe "Cbc_getIndices"                    getIndices      
 foreign import ccall unsafe "Cbc_getElements"                   getElements                   :: ModelHandle -> IO (Ptr CDouble)
 foreign import ccall unsafe "Cbc_getObjValue"                   getObjValue                   :: ModelHandle -> IO CDouble
 
+foreign import ccall unsafe "Cbc_setParameter"   setParameter   :: ModelHandle -> CString -> CString -> IO ()
 foreign import ccall unsafe "Cbc_solve"          solve          :: ModelHandle -> IO CInt
 
 foreign import ccall unsafe "Cbc_getNumRows"     getNumRows     :: ModelHandle -> IO CInt
