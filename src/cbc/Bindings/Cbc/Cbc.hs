@@ -55,7 +55,7 @@ foreign import ccall unsafe "Cbc_newModel"       newModel       :: IO ModelHandl
 foreign import ccall unsafe "&Cbc_deleteModel"   deleteModel    :: FunPtr (ModelHandle -> IO ())
 
 foreign import ccall unsafe "Cbc_loadProblem"    loadProblem    :: ModelHandle -> CInt -> CInt -> Ptr CInt -> Ptr CInt -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> Ptr CDouble -> IO ()
-foreign import ccall unsafe "Cbc_readMps"        readMps        :: ModelHandle -> CString -> Bool -> Bool -> IO CInt
+foreign import ccall unsafe "Cbc_readMps"        readMps        :: ModelHandle -> CString -> IO CInt
 
 foreign import ccall unsafe "Cbc_getObjSense"                   getObjSense                   :: ModelHandle -> IO CDouble
 foreign import ccall unsafe "Cbc_setObjSense"                   setObjSense                   :: ModelHandle -> CDouble -> IO ()

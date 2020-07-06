@@ -57,9 +57,9 @@ loadProblem :: ModelHandle -> CInt -> CInt -> Ptr CInt -> Ptr CInt -> Ptr CDoubl
 loadProblem model numcols numrows start index value collb colub obj rowlb rowub = withForeignPtr (runModel model) $ \model ->
     Unmanaged.loadProblem model numcols numrows start index value collb colub obj rowlb rowub
 
-readMps :: ModelHandle -> CString -> Bool -> Bool -> IO CInt
-readMps model filename keepNames ignoreErrors = withForeignPtr (runModel model) $ \model ->
-    Unmanaged.readMps model filename keepNames ignoreErrors
+readMps :: ModelHandle -> CString -> IO CInt
+readMps model filename = withForeignPtr (runModel model) $ \model ->
+    Unmanaged.readMps model filename
 
 getObjSense :: ModelHandle -> IO CDouble
 getObjSense model = withForeignPtr (runModel model) $ \model ->

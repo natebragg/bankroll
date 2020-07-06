@@ -69,7 +69,7 @@ instance Foreign.MonadSolver BranchCutSolver where
     newModel           = liftIO Cbc.newModel >>= setModel
     loadProblem nc nr s i v cl cu o rl ru =
                          withModel $ \m -> Cbc.loadProblem m nc nr s i v cl cu o rl ru
-    readMps f k i      = withModel $ \m -> Cbc.readMps m f k i
+    readMps f _ _      = withModel $ \m -> Cbc.readMps m f
     getObjSense        = withModel Cbc.getObjSense
     setObjSense s      = withModel $ \m -> Cbc.setObjSense m s
     getRowLower        = withModel Cbc.getRowLower
