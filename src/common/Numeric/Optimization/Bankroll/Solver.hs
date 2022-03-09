@@ -79,9 +79,11 @@ class (MonadIO m, Foreign.MonadSolver m) => MonadSolver m where
             [clbc, cubc, objc, rlbc, rubc] = map length [collb, colub, obj, rowlb, rowub]
             numcols = maximum $ clbc:cubc:objc:map length values
             numrows = maximum $ [rlbc, rubc, length values]
-            pad n f = if null f then [] else toList f ++ replicate n 0.0
+            padWith what n f = if null f then [] else toList f ++ replicate n what
+            pad n f = padWith 0 n f
+            paddedStart = padWith (last $ 0 : start) (1 + numcols - length start) start
             newArrayOrNull xs = if null xs then pure nullPtr else liftIO $ newArray xs
-        start <- newArrayOrNull (map fromIntegral                      start)
+        start <- newArrayOrNull (map fromIntegral                paddedStart)
         index <- newArrayOrNull (map fromIntegral                      index)
         value <- newArrayOrNull (map realToFrac                        value)
         collb <- newArrayOrNull (map realToFrac $ pad (numcols - clbc) collb)
