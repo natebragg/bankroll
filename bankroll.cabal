@@ -4,7 +4,7 @@ cabal-version: 3.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2afa563746326fa9c178297c77a86a3546777ac70eea0220f26095ac651f15a3
+-- hash: 7ca10b6f73f525114a40d8e3d70f57b331192b8fb960b63d22cb08b93aa099ea
 
 name:           bankroll
 version:        1.3.2.2
@@ -94,6 +94,7 @@ library bankroll-common
       Numeric.Optimization.Bankroll.Pretty
       Numeric.Optimization.Bankroll.Solver
       Numeric.Optimization.Bankroll.Solver.Foreign
+      Numeric.Optimization.Bankroll.Topo
   other-modules:
       Numeric.Algebra.Double
   hs-source-dirs:

@@ -84,6 +84,7 @@ internal-libraries:
     - Numeric.Optimization.Bankroll.Pretty
     - Numeric.Optimization.Bankroll.Solver
     - Numeric.Optimization.Bankroll.Solver.Foreign
+    - Numeric.Optimization.Bankroll.Topo
     other-modules:
     - Numeric.Algebra.Double
     dependencies:
