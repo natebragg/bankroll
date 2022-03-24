@@ -57,14 +57,16 @@ deriving instance (Show i, Show a) => Show (LinFunc i a)
 deriving instance (Eq i, Eq a) => Eq (LinFunc i a)
 
 instance Enum i => Foldable (LinFunc i) where
-    foldMap f (LinFunc cs _) = go (toEnum 0) cs
-        where go _ [] = mempty
-              go i cs = f (sum $ map snd eqc) `mappend` go (succ i) gtc
+    foldMap f (LinFunc cs s) = go (enumFromTo (toEnum 0) s) cs
+        where go [] [] = mempty
+              go []  _ = error "Bug in foldMap"
+              go (i:is) [] = f zero `mappend` go is []
+              go (i:is) cs = f (sum $ map snd eqc) `mappend` go is gtc
                     where (eqc, gtc) = span ((i ==) . fst) cs
 
     null = null . coordinates
 
-    length (LinFunc [] s) = fromEnum s
+    length (LinFunc _ s) = fromEnum s
 
     elem a = any ((a ==) . snd) . coordinates
 
